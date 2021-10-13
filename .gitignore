@@ -1,0 +1,9 @@
+*.npy
+*.cfl
+*.hdr
+*.pt
+*.png
+*.h5
+# python compiled files
+*.pyc
+python/.ipynb_checkpoints/
