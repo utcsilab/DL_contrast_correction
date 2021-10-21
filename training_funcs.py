@@ -37,8 +37,9 @@ def GAN_training(hparams):#separate function for doing generative training
         main_loss  = nn.MSELoss() #same as L2 loss
 
     #lists to store the losses of discriminator and generator
-    G_loss_l1, G_loss_adv = np.zeros((epochs,train_data_len)), np.zeros((epochs,train_data_len)) 
+    G_loss_l1, G_loss_adv    = np.zeros((epochs,train_data_len)), np.zeros((epochs,train_data_len)) 
     D_loss_real, D_loss_fake = np.zeros((epochs,train_data_len)), np.zeros((epochs,train_data_len))
+    D_out_real, D_out_fake   = np.zeros((epochs,train_data_len)), np.zeros((epochs,train_data_len))
     G_loss_list, D_loss_list = np.zeros((epochs,train_data_len)), np.zeros((epochs,train_data_len))
 
     if (hparams.mode=='Patch'):
@@ -78,7 +79,11 @@ def GAN_training(hparams):#separate function for doing generative training
                 loss_val = main_loss(generated_image, target_img)
             G_loss = gen_loss + (Lambda* loss_val)  
             G_loss_list[epoch,index] = G_loss.cpu().detach().numpy()
-            G_loss_l1[epoch,index], G_loss_adv[epoch,index] = loss_val.cpu().detach().numpy(), gen_loss.cpu().detach().numpy()          
+            G_loss_l1[epoch,index], G_loss_adv[epoch,index] = loss_val.cpu().detach().numpy(), gen_loss.cpu().detach().numpy()   
+            #storing discriminator outputs 
+            D_out_fake[epoch,index] = np.mean(G.cpu().detach().numpy())             
+            G_real = Discriminator1(target_img)
+            D_out_real[epoch,index] = np.mean(G_real.cpu().detach().numpy())
             # compute gradients and run optimizer step
             G_optimizer.zero_grad()
             G_loss.backward()
@@ -118,12 +123,15 @@ def GAN_training(hparams):#separate function for doing generative training
         'epoch': epoch,
         'model_state_dict': UNet1.state_dict(),
         'optimizer_state_dict': G_optimizer.state_dict(),
+        'Discriminator_state_dict':Discriminator1.state_dict(),
         'G_loss_list': G_loss_list,
         'G_loss_l1': G_loss_l1,
         'G_loss_adv': G_loss_adv,
         'D_loss_list': D_loss_list,
         'D_loss_real': D_loss_real,
         'D_loss_fake': D_loss_fake,
+        'D_out_real':D_out_real,
+        'D_out_fake':D_out_fake,
         'hparams': hparams}, tosave_weights)
     plotter_GAN(hparams,tosave_weights,local_dir,UNet1,train_loader,val_loader)
 

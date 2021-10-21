@@ -12,8 +12,10 @@ def plotter_GAN(hparams,tosave_weights,local_dir,UNet1,train_loader,val_loader):
     D_loss_fake =  saved_results['D_loss_fake']
     G_loss      =  saved_results['G_loss_list']
     D_loss      = saved_results['D_loss_list']
+    D_out_fake = saved_results['D_out_fake']
+    D_out_real = saved_results['D_out_real']
     Lambda      = hparams.Lambda
-    fig, ax1 = plt.subplots(figsize=(8,20), nrows=3, ncols=1)
+    fig, ax1 = plt.subplots(figsize=(8,20), nrows=4, ncols=1)
     ax2 = ax1[0].twinx()
     ax1[0].plot(np.mean(G_loss_l1,axis=1), 'g-')
     ax2.plot(np.mean(G_loss_adv,axis=1), 'b-')
@@ -48,6 +50,18 @@ def plotter_GAN(hparams,tosave_weights,local_dir,UNet1,train_loader,val_loader):
     ax2.set_ylabel('Generator loss', color='b')
     ax2.tick_params(axis='y', colors='b')
     plt.title('GAN Loss, $\lambda$ = {}'.format(Lambda))
+
+
+    ax2 = ax1[3].twinx()
+    ax1[3].plot(np.sum(D_out_real,axis=1)/np.count_nonzero(D_out_real[:,:], axis=1), 'g-')
+    ax2.plot(np.mean(D_out_fake,axis=1), 'b-')
+
+    ax1[3].set_xlabel('Epoch index')
+    ax1[3].set_ylabel('Disc out real', color='g')
+    ax1[3].tick_params(axis='y', colors='g')
+    ax2.set_ylabel('Disc out fake', color='b')
+    ax2.tick_params(axis='y', colors='b')
+    plt.title('Disc out, $\lambda$ = {}'.format(Lambda))
 
     # Save
     plt.tight_layout()
