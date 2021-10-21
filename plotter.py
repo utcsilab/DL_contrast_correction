@@ -21,7 +21,7 @@ def plotter_GAN(hparams,tosave_weights,local_dir,UNet1,train_loader,val_loader):
     ax2.plot(np.mean(G_loss_adv,axis=1), 'b-')
 #     ax1.set_ylim([0, Lambda*.50])
     ax1[0].set_xlabel('Epoch index')
-    ax1[0].set_ylabel('SSIM loss', color='g')
+    ax1[0].set_ylabel('{} loss'.format(hparams.loss_type), color='g')
     ax1[0].tick_params(axis='y', colors='g')
     ax2.set_ylabel('Adv loss', color='b')
     ax2.tick_params(axis='y', colors='b')

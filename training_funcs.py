@@ -24,7 +24,7 @@ def GAN_training(hparams):#separate function for doing generative training
     # choosing betas after talking with Ali, this are required for the case of GANs
     G_optimizer = optim.Adam(UNet1.parameters(), lr=lr, betas=(0.5, 0.999))#right now choosing Adam, other option is SGD
     scheduler = StepLR(G_optimizer, hparams.step_size, gamma=hparams.decay_gamma)
-    D_optimizer = optim.Adam(Discriminator1.parameters(), lr=lr, betas=(0.5, 0.999))#right now choosing Adam, other option is SGD
+    D_optimizer = optim.Adam(Discriminator1.parameters(), lr=4*lr, betas=(0.5, 0.999))#right now choosing Adam, other option is SGD
 
     # initialize arrays for storing losses
     train_data_len = train_loader.__len__() # length of training_generator
@@ -46,9 +46,50 @@ def GAN_training(hparams):#separate function for doing generative training
         unfold = torch.nn.Unfold(kernel_size=patch_size, stride=patch_stride) # Unfold kernel
     # Loop over epochs
     for epoch in tqdm(range(epochs), total=epochs, leave=True):
-        non_zero_len = int(np.ceil(train_data_len*Disc_train_freq))
-        discriminator_training_index = np.concatenate((np.ones(non_zero_len),np.zeros(train_data_len - non_zero_len)))
-        np.random.shuffle(discriminator_training_index)# so that discriminator is trained on different images every time
+        disc_epoch = 10#discriminator will be trained 10 times as much as generator and it will be trained first
+        for disc_epoch in range(disc_epoch):
+            for index, (input_img, target_img, params) in enumerate(train_loader):
+                if (hparams.mode=='Patch'):
+                    unfolded_in, unfolded_out = unfold(input_img[None,...]), unfold(target_img[None,...])
+                    patches_in,  patches_out  = unfolded_in.reshape(1,patch_size,patch_size,-1), unfolded_out.reshape(1,patch_size,patch_size,-1)
+                    patches_in,  patches_out  = patches_in.permute(3,0,1,2), patches_out.permute(3,0,1,2)
+                    input_img, target_img = patches_in.to(device), patches_out.to(device) # Transfer to GPU
+                else:
+                    input_img, target_img = input_img[None,...], target_img[None,...]
+                # this works for both
+                input_img, target_img = input_img.to(device), target_img.to(device) # Transfer to GPU
+
+                generated_image = UNet1(input_img)
+                G = Discriminator1(generated_image)
+
+                # ground truth labels real and fake
+                output_size = G.size(3)
+                #using soft targets
+                real_target = 0.9*(torch.ones(input_img.size(0), 1, output_size, output_size).to(device))
+                fake_target = (torch.zeros(input_img.size(0), 1, output_size, output_size).to(device))
+
+
+                disc_inp_fake = generated_image.detach()
+                D_fake = Discriminator1(disc_inp_fake)
+                D_fake_loss = discriminator_loss(D_fake, fake_target)
+                #Disc real loss
+                disc_inp_real = target_img                
+                D_real = Discriminator1(disc_inp_real)
+                D_real_loss = discriminator_loss(D_real,  real_target)
+
+                # average discriminator loss
+                D_total_loss = (D_real_loss + D_fake_loss) / 2
+                # compute gradients and run optimizer step
+                D_total_loss.backward()
+                D_optimizer.step()
+                D_loss_list[epoch,index] = D_loss_list[epoch,index] + D_total_loss.cpu().detach().numpy()
+                D_loss_real[epoch,index] = D_loss_real[epoch,index] + D_real_loss.cpu().detach().numpy()
+                D_loss_fake[epoch,index] = D_loss_fake[epoch,index] + D_fake_loss.cpu().detach().numpy()
+        D_loss_list[epoch,:] =  D_loss_list[epoch,:]/disc_epoch #avg loss over disc_epoch training of discriminator
+        D_loss_real[epoch,:] =  D_loss_real[epoch,:]/disc_epoch
+        D_loss_fake[epoch,:] =  D_loss_fake[epoch,:]/disc_epoch
+
+
         for index, (input_img, target_img, params) in enumerate(train_loader):
             if (hparams.mode=='Patch'):
                 unfolded_in, unfolded_out = unfold(input_img[None,...]), unfold(target_img[None,...])
@@ -68,7 +109,7 @@ def GAN_training(hparams):#separate function for doing generative training
 
             # ground truth labels real and fake
             output_size = G.size(3)
-            real_target = (torch.ones(input_img.size(0), 1, output_size, output_size).to(device))
+            real_target = 0.9*(torch.ones(input_img.size(0), 1, output_size, output_size).to(device))
             fake_target = (torch.zeros(input_img.size(0), 1, output_size, output_size).to(device))
 
             gen_loss = adversarial_loss(G, real_target)
@@ -90,28 +131,6 @@ def GAN_training(hparams):#separate function for doing generative training
             G_optimizer.step()
 
             # Generator training ends
-            # train discriminator with fake/generated images
-            #
-            # after discussing with marius: the dicriminator need not to see the input image
-            # Ali: only train every 10th iteration
-            if(discriminator_training_index[index]==1):
-                #Disc fake loss
-                disc_inp_fake = generated_image.detach()
-                D_fake = Discriminator1(disc_inp_fake)
-                D_fake_loss = discriminator_loss(D_fake, fake_target)
-                #Disc real loss
-                disc_inp_real = target_img                
-                D_real = Discriminator1(disc_inp_real)
-                D_real_loss = discriminator_loss(D_real,  real_target)
-
-                # average discriminator loss
-                D_total_loss = (D_real_loss + D_fake_loss) / 2
-                # compute gradients and run optimizer step
-                D_total_loss.backward()
-                D_optimizer.step()
-                D_loss_list[epoch,index] = D_total_loss.cpu().detach().numpy()
-                D_loss_real[epoch,index] = D_real_loss.cpu().detach().numpy()
-                D_loss_fake[epoch,index] = D_fake_loss.cpu().detach().numpy()
         # Scheduler
         scheduler.step()
     # Save models
