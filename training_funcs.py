@@ -46,7 +46,8 @@ def GAN_training(hparams):#separate function for doing generative training
         unfold = torch.nn.Unfold(kernel_size=patch_size, stride=patch_stride) # Unfold kernel
     # Loop over epochs
     for epoch in tqdm(range(epochs), total=epochs, leave=True):
-        disc_epoch = 10#discriminator will be trained 10 times as much as generator and it will be trained first
+        disc_epoch = 10 #discriminator will be trained 10 times as much as generator and it will be trained first
+        # this does not work as I expected hence, both need to be trained simultaneoulsy
         for disc_epoch in range(disc_epoch):
             for index, (input_img, target_img, params) in enumerate(train_loader):
                 if (hparams.mode=='Patch'):
