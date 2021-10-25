@@ -1,5 +1,5 @@
 #!/bin/bash
-for model_type in UNET #GAN #
+for model_type in GAN #UNET
 do
     for loss in  L1 SSIM # L2 #
     do

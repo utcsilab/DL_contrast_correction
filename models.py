@@ -8,7 +8,15 @@ from torch import nn
 # Keep doing a batch wise
 # this have 5 conv layers
 class Discriminator(nn.Module):
+    """Defines a PatchGAN discriminator"""
     def __init__(self, input_nc, ndf = 64, n_layers = 3, norm_layer=nn.BatchNorm2d):
+        """Construct a PatchGAN discriminator
+        Parameters:
+            input_nc (int)  -- the number of channels in input images
+            ndf (int)       -- the number of filters in the last conv layer
+            n_layers (int)  -- the number of conv layers in the discriminator
+            norm_layer      -- normalization layer
+        """
         super(Discriminator, self).__init__()
         kw = 3 #make it odd
         padw = 1 #kw//2 to keep same
@@ -33,7 +41,8 @@ class Discriminator(nn.Module):
             norm_layer(ndf * nf_mult),
             nn.LeakyReLU(0.2, True)
         ]
-        #remove the sigmoid and put it in the end
+        #remove the sigmoid and put it in the end, do we really need the sigmoid here, original
+        # pix2pix doesnot have the sigmoid here in the end. 
         sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw,
                                bias=False), nn.Sigmoid()]  # output 1 channel prediction map
         self.model = nn.Sequential(*sequence)
