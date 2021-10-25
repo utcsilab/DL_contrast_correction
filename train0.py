@@ -61,14 +61,14 @@ hparams.filter      = 64
 hparams.Lambda      = args.Lambda
 hparams.device      = device
 hparams.batch_size  = 1
-hparams.val_split   = 0
+hparams.val_split   = 0.2
 hparams.step_size   = 100  # Number of epochs to decay with gamma
 hparams.decay_gamma = 0.5
 # Model parameters
 hparams.n_channels  = 1
 hparams.n_classes   = hparams.n_channels
 hparams.root_dir    = '/home/sidharth/sid_notebooks/UNET_GAN2_training/'
-hparams.data_file   = 'available_input_data'
+hparams.data_file   = 'mdme_data' # 'available_input_data' # 
 hparams.model_arc   = args.model_arc #possible options are 'UNET' and 'GAN'
 hparams.Disc_train_freq = 0.1 #frequency at which discriminator is trained as compared to the generator
 hparams.loss_type   = args.loss_type #loss type to be used in training the model (SSIM, L1, L2)
