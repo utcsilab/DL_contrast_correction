@@ -91,6 +91,7 @@ def GAN_training(hparams):#separate function for doing generative training
         D_loss_fake[epoch,:] =  D_loss_fake[epoch,:]/disc_epoch
 
 
+        # for disc_epoch in range(disc_epoch):
         for index, (input_img, target_img, params) in enumerate(train_loader):
             if (hparams.mode=='Patch'):
                 unfolded_in, unfolded_out = unfold(input_img[None,...]), unfold(target_img[None,...])
@@ -102,9 +103,6 @@ def GAN_training(hparams):#separate function for doing generative training
             # this works for both
             input_img, target_img = input_img.to(device), target_img.to(device) # Transfer to GPU
             # generator forward pass
-            #
-            # Train generator with real labels, train generator before the discriminator
-            #
             generated_image = UNet1(input_img)
             G = Discriminator1(generated_image)
 
@@ -120,16 +118,17 @@ def GAN_training(hparams):#separate function for doing generative training
             else:
                 loss_val = main_loss(generated_image, target_img)
             G_loss = gen_loss + (Lambda* loss_val)  
+            # compute gradients and run optimizer step
+            G_optimizer.zero_grad()
+            G_loss.backward()
+            G_optimizer.step()
+            # store loss values
             G_loss_list[epoch,index] = G_loss.cpu().detach().numpy()
             G_loss_l1[epoch,index], G_loss_adv[epoch,index] = loss_val.cpu().detach().numpy(), gen_loss.cpu().detach().numpy()   
             #storing discriminator outputs 
             D_out_fake[epoch,index] = np.mean(G.cpu().detach().numpy())             
             G_real = Discriminator1(target_img)
             D_out_real[epoch,index] = np.mean(G_real.cpu().detach().numpy())
-            # compute gradients and run optimizer step
-            G_optimizer.zero_grad()
-            G_loss.backward()
-            G_optimizer.step()
 
             # Generator training ends
         # Scheduler

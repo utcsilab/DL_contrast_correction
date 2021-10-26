@@ -11,7 +11,7 @@ from torchvision import transforms
 from dataloader import *
 from losses import SSIMLoss, generator_loss, discriminator_loss, generator_loss_separately, adversarial_loss, NRMSELoss
 
-os.chdir('/home/sidharth/sid_notebooks/UNET_GAN2_training/train_results/model_GAN_input_data_available_input_data_loss_type_L1_mode_Full_img/learning_rate_0.0001_epochs_1000_lambda_1')
+os.chdir('/home/sidharth/sid_notebooks/UNET_GAN2_training/train_results/model_GAN_input_data_mdme_data_loss_type_L1_mode_Full_img/learning_rate_0.0001_epochs_10_lambda_1')
 saved_results = torch.load('saved_weights.pt')
 hparams   =  saved_results['hparams']
 # hparams.device = 'cpu' #all gpus are clogged
@@ -29,7 +29,7 @@ Discriminator1.eval()
 # Discriminator1(input_img[None,...].to(hparams.device)) 
 
 
-hparams.data_file   =  'available_input_data'#'subject13_data'
+hparams.data_file   =  'mdme_data'#'subject13_data'
 data_dir = hparams.root_dir + hparams.data_file
 dataset = Exp_contrast_Dataset(data_dir,transform=transforms.Compose([
     Normalize_by_max(),Toabsolute()]))
@@ -52,6 +52,7 @@ for index, (input_img, target_img, params) in enumerate(test_loader):
     D_fake_loss = discriminator_loss(disc_pred_fake, fake_target)
     print('Discriminator BCE loss; real = {}, fake = {}'.format(D_real_loss, D_fake_loss))
     print('Avg. discriminator out for real and fake:-',torch.mean(disc_pred_real),torch.mean(disc_pred_fake))
+    exit()
 
     # print('Parameters of contrast:- ','(TE = {}, TR = {}, TI = {})'.format(*params[0]))
     # print('NRMSE between the ground truth and the NN input:- ',function_defs.nrmse(actual_out,actual_in))
