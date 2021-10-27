@@ -35,20 +35,21 @@ def GAN_training(hparams):#separate function for doing generative training
         main_loss  = nn.L1Loss()
     elif (hparams.loss_type=='L2'):
         main_loss  = nn.MSELoss() #same as L2 loss
-
+    # figuring out the issue with weak discriminator in training GAN
+    disc_epoch = 10 #discriminator will be trained 10 times as much as generator and it will be trained first
+    gen_epoch  = 10 #generator will be trained for these many iterations 
     #lists to store the losses of discriminator and generator
-    G_loss_l1, G_loss_adv    = np.zeros((epochs,train_data_len)), np.zeros((epochs,train_data_len)) 
-    D_loss_real, D_loss_fake = np.zeros((epochs,train_data_len)), np.zeros((epochs,train_data_len))
-    D_out_real, D_out_fake   = np.zeros((epochs,train_data_len)), np.zeros((epochs,train_data_len))
-    G_loss_list, D_loss_list = np.zeros((epochs,train_data_len)), np.zeros((epochs,train_data_len))
+    G_loss_l1, G_loss_adv    = np.zeros((epochs,gen_epoch,train_data_len)), np.zeros((epochs,gen_epoch,train_data_len)) 
+    D_loss_real, D_loss_fake = np.zeros((epochs,gen_epoch,train_data_len)), np.zeros((epochs,gen_epoch,train_data_len))
+    D_out_real, D_out_fake   = np.zeros((epochs,disc_epoch,train_data_len)), np.zeros((epochs,disc_epoch,train_data_len))
+    G_loss_list, D_loss_list = np.zeros((epochs,gen_epoch,train_data_len)), np.zeros((epochs,disc_epoch,train_data_len))
 
     if (hparams.mode=='Patch'):
         unfold = torch.nn.Unfold(kernel_size=patch_size, stride=patch_stride) # Unfold kernel
     # Loop over epochs
     for epoch in tqdm(range(epochs), total=epochs, leave=True):
-        disc_epoch = 10 #discriminator will be trained 10 times as much as generator and it will be trained first
         # this does not work as I expected hence, both need to be trained simultaneoulsy
-        for disc_epoch in range(disc_epoch):
+        for disc_epoch_idx in range(disc_epoch):
             for index, (input_img, target_img, params) in enumerate(train_loader):
                 if (hparams.mode=='Patch'):
                     unfolded_in, unfolded_out = unfold(input_img[None,...]), unfold(target_img[None,...])
@@ -83,53 +84,58 @@ def GAN_training(hparams):#separate function for doing generative training
                 # compute gradients and run optimizer step
                 D_total_loss.backward()
                 D_optimizer.step()
-                D_loss_list[epoch,index] = D_loss_list[epoch,index] + D_total_loss.cpu().detach().numpy()
-                D_loss_real[epoch,index] = D_loss_real[epoch,index] + D_real_loss.cpu().detach().numpy()
-                D_loss_fake[epoch,index] = D_loss_fake[epoch,index] + D_fake_loss.cpu().detach().numpy()
-        D_loss_list[epoch,:] =  D_loss_list[epoch,:]/disc_epoch #avg loss over disc_epoch training of discriminator
-        D_loss_real[epoch,:] =  D_loss_real[epoch,:]/disc_epoch
-        D_loss_fake[epoch,:] =  D_loss_fake[epoch,:]/disc_epoch
+                D_loss_list[epoch,disc_epoch_idx,index] = D_loss_list[epoch,index] + D_total_loss.cpu().detach().numpy()
+                D_loss_real[epoch,disc_epoch_idx,index] = D_loss_real[epoch,index] + D_real_loss.cpu().detach().numpy()
+                D_loss_fake[epoch,disc_epoch_idx,index] = D_loss_fake[epoch,index] + D_fake_loss.cpu().detach().numpy()
+        # D_loss_list[epoch,:] =  D_loss_list[epoch,:]/disc_epoch #avg loss over disc_epoch training of discriminator
+        # D_loss_real[epoch,:] =  D_loss_real[epoch,:]/disc_epoch
+        # D_loss_fake[epoch,:] =  D_loss_fake[epoch,:]/disc_epoch
 
 
-        # for disc_epoch in range(disc_epoch):
-        for index, (input_img, target_img, params) in enumerate(train_loader):
-            if (hparams.mode=='Patch'):
-                unfolded_in, unfolded_out = unfold(input_img[None,...]), unfold(target_img[None,...])
-                patches_in,  patches_out  = unfolded_in.reshape(1,patch_size,patch_size,-1), unfolded_out.reshape(1,patch_size,patch_size,-1)
-                patches_in,  patches_out  = patches_in.permute(3,0,1,2), patches_out.permute(3,0,1,2)
-                input_img, target_img = patches_in.to(device), patches_out.to(device) # Transfer to GPU
-            else:
-                input_img, target_img = input_img[None,...], target_img[None,...]
-            # this works for both
-            input_img, target_img = input_img.to(device), target_img.to(device) # Transfer to GPU
-            # generator forward pass
-            generated_image = UNet1(input_img)
-            G = Discriminator1(generated_image)
+        for gen_epoch_idx in range(gen_epoch):
+            for index, (input_img, target_img, params) in enumerate(train_loader):
+                if (hparams.mode=='Patch'):
+                    unfolded_in, unfolded_out = unfold(input_img[None,...]), unfold(target_img[None,...])
+                    patches_in,  patches_out  = unfolded_in.reshape(1,patch_size,patch_size,-1), unfolded_out.reshape(1,patch_size,patch_size,-1)
+                    patches_in,  patches_out  = patches_in.permute(3,0,1,2), patches_out.permute(3,0,1,2)
+                    input_img, target_img = patches_in.to(device), patches_out.to(device) # Transfer to GPU
+                else:
+                    input_img, target_img = input_img[None,...], target_img[None,...]
+                # this works for both
+                input_img, target_img = input_img.to(device), target_img.to(device) # Transfer to GPU
+                # generator forward pass
+                generated_image = UNet1(input_img)
+                G = Discriminator1(generated_image)
 
-            # ground truth labels real and fake
-            output_size = G.size(3)
-            real_target = 0.9*(torch.ones(input_img.size(0), 1, output_size, output_size).to(device))
-            fake_target = (torch.zeros(input_img.size(0), 1, output_size, output_size).to(device))
+                # ground truth labels real and fake
+                output_size = G.size(3)
+                real_target = 0.9*(torch.ones(input_img.size(0), 1, output_size, output_size).to(device))
+                fake_target = (torch.zeros(input_img.size(0), 1, output_size, output_size).to(device))
 
-            gen_loss = adversarial_loss(G, real_target)
-            #the 1 tensor need to be changed based on the max value in the input images
-            if (hparams.loss_type=='SSIM'):
-                loss_val = main_loss(generated_image, target_img, torch.tensor([1]).to(device))
-            else:
-                loss_val = main_loss(generated_image, target_img)
-            G_loss = gen_loss + (Lambda* loss_val)  
-            # compute gradients and run optimizer step
-            G_optimizer.zero_grad()
-            G_loss.backward()
-            G_optimizer.step()
-            # store loss values
-            G_loss_list[epoch,index] = G_loss.cpu().detach().numpy()
-            G_loss_l1[epoch,index], G_loss_adv[epoch,index] = loss_val.cpu().detach().numpy(), gen_loss.cpu().detach().numpy()   
-            #storing discriminator outputs 
-            D_out_fake[epoch,index] = np.mean(G.cpu().detach().numpy())             
-            G_real = Discriminator1(target_img)
-            D_out_real[epoch,index] = np.mean(G_real.cpu().detach().numpy())
+                gen_loss = adversarial_loss(G, real_target)
+                #the 1 tensor need to be changed based on the max value in the input images
+                if (hparams.loss_type=='SSIM'):
+                    loss_val = main_loss(generated_image, target_img, torch.tensor([1]).to(device))
+                else:
+                    loss_val = main_loss(generated_image, target_img)
+                G_loss = gen_loss + (Lambda* loss_val)  
+                # compute gradients and run optimizer step
+                G_optimizer.zero_grad()
+                G_loss.backward()
+                G_optimizer.step()
+                # store loss values
+                G_loss_list[epoch,gen_epoch_idx,index] = G_loss.cpu().detach().numpy()
+                G_loss_l1[epoch,gen_epoch_idx,index], G_loss_adv[epoch,gen_epoch_idx,index] = loss_val.cpu().detach().numpy(), gen_loss.cpu().detach().numpy()   
+                #storing discriminator outputs 
+                D_out_fake[epoch,gen_epoch_idx,index] = np.mean(G.cpu().detach().numpy())             
+                G_real = Discriminator1(target_img)
+                D_out_real[epoch,gen_epoch_idx,index] = np.mean(G_real.cpu().detach().numpy())
 
+            # G_loss_list[epoch,:] = G_loss_list[epoch,:]/gen_epoch 
+            # G_loss_l1[epoch,:], G_loss_adv[epoch,:] = G_loss_l1[epoch,:]/gen_epoch, G_loss_adv[epoch,:]/gen_epoch
+            # #storing discriminator outputs 
+            # D_out_fake[epoch,:] = D_out_fake[epoch,:]/gen_epoch          
+            # D_out_real[epoch,:] = D_out_fake[epoch,:]/gen_epoch 
             # Generator training ends
         # Scheduler
         scheduler.step()
