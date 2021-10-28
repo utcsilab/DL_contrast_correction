@@ -7,3 +7,5 @@
 # python compiled files
 *.pyc
 python/.ipynb_checkpoints/
+# dont upload jupyter notebook, difficult to track them
+*.ipynb 

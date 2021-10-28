@@ -23,9 +23,9 @@ def GAN_training(hparams):#separate function for doing generative training
 
     # choosing betas after talking with Ali, this are required for the case of GANs
     G_optimizer = optim.Adam(UNet1.parameters(), lr=lr, betas=(0.5, 0.999))#right now choosing Adam, other option is SGD
-    scheduler = StepLR(G_optimizer, hparams.step_size, gamma=hparams.decay_gamma)
+    G_scheduler = StepLR(G_optimizer, hparams.step_size, gamma=hparams.decay_gamma)
     D_optimizer = optim.Adam(Discriminator1.parameters(), lr=4*lr, betas=(0.5, 0.999))#right now choosing Adam, other option is SGD
-
+    D_scheduler = StepLR(D_optimizer, 5, 0.5)
     # initialize arrays for storing losses
     train_data_len = train_loader.__len__() # length of training_generator
     # Criterions or losses to choose from
@@ -49,6 +49,7 @@ def GAN_training(hparams):#separate function for doing generative training
     # Loop over epochs
     for epoch in tqdm(range(epochs), total=epochs, leave=True):
         # this does not work as I expected hence, both need to be trained simultaneoulsy
+        D_scheduler = StepLR(D_optimizer, 5, 0.5)
         for disc_epoch_idx in range(disc_epoch):
             for index, (input_img, target_img, params) in enumerate(train_loader):
                 if (hparams.mode=='Patch'):
@@ -84,9 +85,10 @@ def GAN_training(hparams):#separate function for doing generative training
                 # compute gradients and run optimizer step
                 D_total_loss.backward()
                 D_optimizer.step()
-                D_loss_list[epoch,disc_epoch_idx,index] = D_loss_list[epoch,index] + D_total_loss.cpu().detach().numpy()
-                D_loss_real[epoch,disc_epoch_idx,index] = D_loss_real[epoch,index] + D_real_loss.cpu().detach().numpy()
-                D_loss_fake[epoch,disc_epoch_idx,index] = D_loss_fake[epoch,index] + D_fake_loss.cpu().detach().numpy()
+                D_loss_list[epoch,disc_epoch_idx,index] =  D_total_loss.cpu().detach().numpy()
+                D_loss_real[epoch,disc_epoch_idx,index] =  D_real_loss.cpu().detach().numpy()
+                D_loss_fake[epoch,disc_epoch_idx,index] =  D_fake_loss.cpu().detach().numpy()
+        D_scheduler.step()
         # D_loss_list[epoch,:] =  D_loss_list[epoch,:]/disc_epoch #avg loss over disc_epoch training of discriminator
         # D_loss_real[epoch,:] =  D_loss_real[epoch,:]/disc_epoch
         # D_loss_fake[epoch,:] =  D_loss_fake[epoch,:]/disc_epoch
@@ -138,7 +140,7 @@ def GAN_training(hparams):#separate function for doing generative training
             # D_out_real[epoch,:] = D_out_fake[epoch,:]/gen_epoch 
             # Generator training ends
         # Scheduler
-        scheduler.step()
+        G_scheduler.step()
     # Save models
     local_dir = hparams.global_dir + '/learning_rate_{:.4f}_epochs_{}_lambda_{}'.format(hparams.lr,hparams.epochs,hparams.Lambda) 
     if not os.path.isdir(local_dir):
