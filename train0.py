@@ -63,7 +63,7 @@ hparams.Lambda      = args.Lambda
 hparams.device      = device
 hparams.batch_size  = 1
 hparams.val_split   = 0.2
-hparams.step_size   = 100  # Number of epochs to decay with gamma
+hparams.step_size   = 10  # Number of epochs to decay with gamma
 hparams.decay_gamma = 0.5
 # Model parameters
 hparams.n_channels  = 1

@@ -7,6 +7,17 @@ from torch.optim.lr_scheduler import StepLR
 from losses import SSIMLoss, generator_loss, discriminator_loss, generator_loss_separately, adversarial_loss, NRMSELoss
 from plotter import plotter_GAN, plotter_UNET
 
+
+def binary_acc(disc_out, actual_out):#function for calculating accuracy of discriminator
+    m = nn.Sigmoid()#sigmoid is removed from the discriminator def to automatically handle the edge cases
+    output = m(disc_out)
+    disc_prediction = output>0.5
+    actual_out = actual_out*torch.ones(disc_prediction.shape)
+    compare = actual_out == disc_prediction
+    out = torch.sum(compare)/torch.prod(torch.tensor(list(actual_out.size())))
+    return out
+
+
 def GAN_training(hparams):#separate function for doing generative training
     #load the parameters of interest
     device = hparams.device  
@@ -24,7 +35,7 @@ def GAN_training(hparams):#separate function for doing generative training
     # choosing betas after talking with Ali, this are required for the case of GANs
     G_optimizer = optim.Adam(UNet1.parameters(), lr=lr, betas=(0.5, 0.999))#right now choosing Adam, other option is SGD
     G_scheduler = StepLR(G_optimizer, hparams.step_size, gamma=hparams.decay_gamma)
-    D_optimizer = optim.Adam(Discriminator1.parameters(), lr=4*lr, betas=(0.5, 0.999))#right now choosing Adam, other option is SGD
+    D_optimizer = optim.Adam(Discriminator1.parameters(), lr=0.00001, betas=(0.5, 0.999))#right now choosing Adam, other option is SGD
     D_scheduler = StepLR(D_optimizer, 5, 0.5)
     # initialize arrays for storing losses
     train_data_len = train_loader.__len__() # length of training_generator
@@ -36,19 +47,21 @@ def GAN_training(hparams):#separate function for doing generative training
     elif (hparams.loss_type=='L2'):
         main_loss  = nn.MSELoss() #same as L2 loss
     # figuring out the issue with weak discriminator in training GAN
-    disc_epoch = 10 #discriminator will be trained 10 times as much as generator and it will be trained first
+    disc_epoch = 50 #discriminator will be trained 10 times as much as generator and it will be trained first
     gen_epoch  = 10 #generator will be trained for these many iterations 
+    hparams.disc_epoch, hparams.gen_epoch = disc_epoch, gen_epoch
     #lists to store the losses of discriminator and generator
     G_loss_l1, G_loss_adv    = np.zeros((epochs,gen_epoch,train_data_len)), np.zeros((epochs,gen_epoch,train_data_len)) 
-    D_loss_real, D_loss_fake = np.zeros((epochs,gen_epoch,train_data_len)), np.zeros((epochs,gen_epoch,train_data_len))
-    D_out_real, D_out_fake   = np.zeros((epochs,disc_epoch,train_data_len)), np.zeros((epochs,disc_epoch,train_data_len))
+    D_loss_real, D_loss_fake = np.zeros((epochs,disc_epoch,train_data_len)), np.zeros((epochs,disc_epoch,train_data_len))
+    D_out_real, D_out_fake   = np.zeros((epochs,gen_epoch,train_data_len)), np.zeros((epochs,gen_epoch,train_data_len))
     G_loss_list, D_loss_list = np.zeros((epochs,gen_epoch,train_data_len)), np.zeros((epochs,disc_epoch,train_data_len))
-
+    D_out_acc = np.zeros((epochs,disc_epoch,train_data_len))
     if (hparams.mode=='Patch'):
         unfold = torch.nn.Unfold(kernel_size=patch_size, stride=patch_stride) # Unfold kernel
     # Loop over epochs
     for epoch in tqdm(range(epochs), total=epochs, leave=True):
-        # this does not work as I expected hence, both need to be trained simultaneoulsy
+        # at each epoch I re-initiate the discriminator optimizer
+        D_optimizer = optim.Adam(Discriminator1.parameters(), lr=0.00001, betas=(0.5, 0.999))
         D_scheduler = StepLR(D_optimizer, 5, 0.5)
         for disc_epoch_idx in range(disc_epoch):
             for index, (input_img, target_img, params) in enumerate(train_loader):
@@ -85,10 +98,11 @@ def GAN_training(hparams):#separate function for doing generative training
                 # compute gradients and run optimizer step
                 D_total_loss.backward()
                 D_optimizer.step()
+                D_out_acc[epoch,disc_epoch_idx,index] = (binary_acc(D_real.cpu(), True) + binary_acc(D_fake.cpu(), False))
                 D_loss_list[epoch,disc_epoch_idx,index] =  D_total_loss.cpu().detach().numpy()
                 D_loss_real[epoch,disc_epoch_idx,index] =  D_real_loss.cpu().detach().numpy()
                 D_loss_fake[epoch,disc_epoch_idx,index] =  D_fake_loss.cpu().detach().numpy()
-        D_scheduler.step()
+            D_scheduler.step()
         # D_loss_list[epoch,:] =  D_loss_list[epoch,:]/disc_epoch #avg loss over disc_epoch training of discriminator
         # D_loss_real[epoch,:] =  D_loss_real[epoch,:]/disc_epoch
         # D_loss_fake[epoch,:] =  D_loss_fake[epoch,:]/disc_epoch
