@@ -47,7 +47,7 @@ class SSIMLoss(nn.Module):
         return 1 - S.mean()
 
 # following from this link https://learnopencv.com/paired-image-to-image-translation-pix2pix/
-adversarial_loss = nn.BCELoss() #wgan loss is also a good option
+adversarial_loss = nn.BCEWithLogitsLoss() #nn.BCELoss() #wgan loss is also a good option
 l1_loss = nn.L1Loss()
 
 
