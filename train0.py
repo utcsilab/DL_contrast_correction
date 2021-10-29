@@ -113,8 +113,12 @@ UNet1.train()
 Discriminator1 = Discriminator(input_nc = hparams.n_channels).to(hparams.device)
 Discriminator1.train()
 
+import torchvision.models as models
+vgg16 = models.vgg16()
+Discriminator2 = vgg16.to(device)
+
 hparams.generator     = UNet1
-hparams.discriminator = Discriminator1
+hparams.discriminator = Discriminator2 #now using the vgg network as the discriminator
 if (hparams.model_arc == 'GAN'):
     training_funcs.GAN_training(hparams)
 elif(hparams.model_arc == 'UNET'):

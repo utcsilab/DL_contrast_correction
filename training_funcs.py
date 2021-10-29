@@ -47,7 +47,7 @@ def GAN_training(hparams):#separate function for doing generative training
     elif (hparams.loss_type=='L2'):
         main_loss  = nn.MSELoss() #same as L2 loss
     # figuring out the issue with weak discriminator in training GAN
-    disc_epoch = 50 #discriminator will be trained 10 times as much as generator and it will be trained first
+    disc_epoch = 5 #discriminator will be trained 10 times as much as generator and it will be trained first
     gen_epoch  = 10 #generator will be trained for these many iterations 
     hparams.disc_epoch, hparams.gen_epoch = disc_epoch, gen_epoch
     #lists to store the losses of discriminator and generator
@@ -55,14 +55,13 @@ def GAN_training(hparams):#separate function for doing generative training
     D_loss_real, D_loss_fake = np.zeros((epochs,disc_epoch,train_data_len)), np.zeros((epochs,disc_epoch,train_data_len))
     D_out_real, D_out_fake   = np.zeros((epochs,gen_epoch,train_data_len)), np.zeros((epochs,gen_epoch,train_data_len))
     G_loss_list, D_loss_list = np.zeros((epochs,gen_epoch,train_data_len)), np.zeros((epochs,disc_epoch,train_data_len))
-    D_out_acc = np.zeros((epochs,disc_epoch,train_data_len))
+    D_out_acc                = np.zeros((epochs,disc_epoch,train_data_len))
+    accuracy_results         = np.zeros((epochs,disc_epoch))
     if (hparams.mode=='Patch'):
         unfold = torch.nn.Unfold(kernel_size=patch_size, stride=patch_stride) # Unfold kernel
     # Loop over epochs
     for epoch in tqdm(range(epochs), total=epochs, leave=True):
         # at each epoch I re-initiate the discriminator optimizer
-        D_optimizer = optim.Adam(Discriminator1.parameters(), lr=0.00001, betas=(0.5, 0.999))
-        D_scheduler = StepLR(D_optimizer, 5, 0.5)
         for disc_epoch_idx in range(disc_epoch):
             for index, (input_img, target_img, params) in enumerate(train_loader):
                 if (hparams.mode=='Patch'):
@@ -79,11 +78,9 @@ def GAN_training(hparams):#separate function for doing generative training
                 G = Discriminator1(generated_image)
 
                 # ground truth labels real and fake
-                output_size = G.size(3)
                 #using soft targets
-                real_target = 0.9*(torch.ones(input_img.size(0), 1, output_size, output_size).to(device))
-                fake_target = (torch.zeros(input_img.size(0), 1, output_size, output_size).to(device))
-
+                real_target = torch.ones(list(G.size())).to(device)
+                fake_target = torch.zeros(list(G.size())).to(device)
 
                 disc_inp_fake = generated_image.detach()
                 D_fake = Discriminator1(disc_inp_fake)
@@ -102,6 +99,7 @@ def GAN_training(hparams):#separate function for doing generative training
                 D_loss_list[epoch,disc_epoch_idx,index] =  D_total_loss.cpu().detach().numpy()
                 D_loss_real[epoch,disc_epoch_idx,index] =  D_real_loss.cpu().detach().numpy()
                 D_loss_fake[epoch,disc_epoch_idx,index] =  D_fake_loss.cpu().detach().numpy()
+            accuracy_results[epoch,disc_epoch_idx] = np.sum(D_out_acc[epoch,disc_epoch_idx,:])/(2*train_data_len)
             D_scheduler.step()
         # D_loss_list[epoch,:] =  D_loss_list[epoch,:]/disc_epoch #avg loss over disc_epoch training of discriminator
         # D_loss_real[epoch,:] =  D_loss_real[epoch,:]/disc_epoch
@@ -124,10 +122,9 @@ def GAN_training(hparams):#separate function for doing generative training
                 G = Discriminator1(generated_image)
 
                 # ground truth labels real and fake
-                output_size = G.size(3)
-                real_target = 0.9*(torch.ones(input_img.size(0), 1, output_size, output_size).to(device))
-                fake_target = (torch.zeros(input_img.size(0), 1, output_size, output_size).to(device))
-
+                real_target = (torch.ones(list(G.size())).to(device))
+                fake_target = torch.zeros(list(G.size())).to(device)
+        
                 gen_loss = adversarial_loss(G, real_target)
                 #the 1 tensor need to be changed based on the max value in the input images
                 if (hparams.loss_type=='SSIM'):
