@@ -173,6 +173,7 @@ def GAN_training(hparams):#separate function for doing generative training
         'D_loss_fake': D_loss_fake,
         'D_out_real':D_out_real,
         'D_out_fake':D_out_fake,
+        'D_out_acc':D_out_acc,
         'hparams': hparams}, tosave_weights)
     plotter_GAN(hparams,tosave_weights,local_dir,UNet1,train_loader,val_loader)
 
