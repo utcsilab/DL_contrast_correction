@@ -47,7 +47,7 @@ def GAN_training(hparams):#separate function for doing generative training
     elif (hparams.loss_type=='L2'):
         main_loss  = nn.MSELoss() #same as L2 loss
     # figuring out the issue with weak discriminator in training GAN
-    disc_epoch = 5 #discriminator will be trained 10 times as much as generator and it will be trained first
+    disc_epoch = 10 #discriminator will be trained 10 times as much as generator and it will be trained first
     gen_epoch  = 10 #generator will be trained for these many iterations 
     hparams.disc_epoch, hparams.gen_epoch = disc_epoch, gen_epoch
     #lists to store the losses of discriminator and generator
