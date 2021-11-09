@@ -33,6 +33,8 @@ parser.add_argument('-l','--loss_type', type=str, default='L1', metavar='',choic
 parser.add_argument('-G','--GPU_idx',  type =int, default=4, metavar='',  help='GPU to Use')
 parser.add_argument('-lb','--Lambda', type=float, default=1,metavar='', help = 'variable to weight loss fn w.r.t adverserial loss')
 parser.add_argument('-df','--data_file', type=str, default='mdme_data', metavar='',choices=['mdme_data', 'available_input_data'], help = 'Data on which the model need to be trained')
+parser.add_argument('-de','--disc_epoch', type=int, default=10, metavar='', help = 'epochs for training the disc separately') 
+parser.add_argument('-ge','--gen_epoch', type=int, default=10, metavar='', help = 'epochs for training the gen separately')
 args = parser.parse_args()
 # print(args) #print the read arguments
 
@@ -65,6 +67,8 @@ hparams.batch_size  = 1
 hparams.val_split   = 0.2
 hparams.step_size   = 10  # Number of epochs to decay with gamma
 hparams.decay_gamma = 0.5
+hparams.disc_epoch  = args.disc_epoch
+hparams.gen_epoch   = args.gen_epoch
 # Model parameters
 hparams.n_channels  = 1
 hparams.n_classes   = hparams.n_channels

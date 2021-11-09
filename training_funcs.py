@@ -33,9 +33,9 @@ def GAN_training(hparams):#separate function for doing generative training
     Disc_train_freq = hparams.Disc_train_freq #frequency at which discriminator is trained as compared to the generator
 
     # choosing betas after talking with Ali, this are required for the case of GANs
-    G_optimizer = optim.Adam(UNet1.parameters(), lr=lr, betas=(0.5, 0.999))#right now choosing Adam, other option is SGD
+    G_optimizer = optim.Adam(UNet1.parameters(), lr=lr, betas=(0.5, 0.999))
     G_scheduler = StepLR(G_optimizer, hparams.step_size, gamma=hparams.decay_gamma)
-    D_optimizer = optim.Adam(Discriminator1.parameters(), lr=0.00001, betas=(0.5, 0.999))#right now choosing Adam, other option is SGD
+    D_optimizer = optim.Adam(Discriminator1.parameters(), lr=0.00001, betas=(0.5, 0.999))
     D_scheduler = StepLR(D_optimizer, 5, 0.5)
     # initialize arrays for storing losses
     train_data_len = train_loader.__len__() # length of training_generator
@@ -47,9 +47,10 @@ def GAN_training(hparams):#separate function for doing generative training
     elif (hparams.loss_type=='L2'):
         main_loss  = nn.MSELoss() #same as L2 loss
     # figuring out the issue with weak discriminator in training GAN
-    disc_epoch = 10 #discriminator will be trained 10 times as much as generator and it will be trained first
-    gen_epoch  = 10 #generator will be trained for these many iterations 
-    hparams.disc_epoch, hparams.gen_epoch = disc_epoch, gen_epoch
+
+    disc_epoch = hparams.disc_epoch #discriminator will be trained 10 times as much as generator and it will be trained first
+    gen_epoch  = hparams.gen_epoch #generator will be trained for these many iterations 
+
     #lists to store the losses of discriminator and generator
     G_loss_l1, G_loss_adv    = np.zeros((epochs,gen_epoch,train_data_len)), np.zeros((epochs,gen_epoch,train_data_len)) 
     D_loss_real, D_loss_fake = np.zeros((epochs,disc_epoch,train_data_len)), np.zeros((epochs,disc_epoch,train_data_len))
@@ -153,7 +154,7 @@ def GAN_training(hparams):#separate function for doing generative training
         # Scheduler
         G_scheduler.step()
     # Save models
-    local_dir = hparams.global_dir + '/learning_rate_{:.4f}_epochs_{}_lambda_{}'.format(hparams.lr,hparams.epochs,hparams.Lambda) 
+    local_dir = hparams.global_dir + '/learning_rate_{:.4f}_epochs_{}_lambda_{}_gen_epoch_{}_disc_epoch_{}'.format(hparams.lr,hparams.epochs,hparams.Lambda,hparams.gen_epoch,hparams.disc_epoch) 
     if not os.path.isdir(local_dir):
         os.makedirs(local_dir)
     tosave_weights = local_dir +'/saved_weights.pt' 
