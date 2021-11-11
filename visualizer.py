@@ -14,8 +14,8 @@ import torchvision.models as models
 vgg16 = models.vgg16()
 
 
-os.chdir('/home/sidharth/sid_notebooks/UNET_GAN2_training/train_results/model_GAN_input_data_mdme_data_loss_type_L1_mode_Full_img/val_split_0.2_learning_rate_0.0001_epochs_10_lambda_1_gen_epoch_10_disc_epoch_20')
-# os.chdir('/home/sidharth/sid_notebooks/UNET_GAN2_training/train_results/model_UNET_input_data_mdme_data_loss_type_L1_mode_Full_img/learning_rate_0.0001_epochs_150_lambda_1')
+# os.chdir('/home/sidharth/sid_notebooks/UNET_GAN2_training/train_results/model_GAN_input_data_mdme_data_loss_type_L1_mode_Full_img/val_split_0.2_learning_rate_0.0001_epochs_10_lambda_1_gen_epoch_10_disc_epoch_20')
+os.chdir('/home/sidharth/sid_notebooks/UNET_GAN2_training/train_results/model_UNET_input_data_mdme_data_loss_type_L1_mode_Full_img/learning_rate_0.0001_epochs_150_lambda_1')
 saved_results = torch.load('saved_weights.pt',map_location='cpu')
 hparams   =  saved_results['hparams']
 hparams.device = 'cpu' #all gpus are clogged
@@ -73,12 +73,12 @@ for index, (input_img, target_img, params) in enumerate(test_loader):
     plt.suptitle('Parameters of contrast:- (TE = {}, TR = {}, TI = {}) {}'.format(*params[0],params[1]), fontsize=16)
     plt.subplot(1,4,1)
     plt.imshow(np.abs(actual_in),cmap='gray',vmax=0.5,vmin=0)
-    plt.title('Input, NRMSE = {}, SSIM = {}'.format(nrmse_in,SSIM_in))
+    plt.title('Input, NRMSE = {:.4f}, SSIM = {:.4f}'.format(nrmse_in,SSIM_in))
     plt.colorbar()
     plt.axis('off')
     plt.subplot(1,4,2)
     plt.imshow(np.abs(NN_output),cmap='gray',vmax=0.5,vmin=0)
-    plt.title('Gen Out, NRMSE = {}, SSIM = {}'.format(nrmse_gan,SSIM_gan))
+    plt.title('Gen Out, NRMSE = {:.4f}, SSIM = {:.4f}'.format(nrmse_gan,SSIM_gan))
     plt.axis('off')
     plt.colorbar()
     plt.subplot(1,4,3)
