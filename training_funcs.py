@@ -192,13 +192,13 @@ def UNET_training(hparams):
     # Criterions
     # Criterions or losses to choose from
     if (hparams.loss_type=='SSIM'):
-        main_loss       = SSIMLoss().to(device)
+        main_loss  = SSIMLoss().to(device)
     elif (hparams.loss_type=='L1'):
         main_loss  = nn.L1Loss()
     elif (hparams.loss_type=='L2'):
         main_loss  = nn.MSELoss() #same as L2 loss
     elif (hparams.loss_type=='Perc_L'):#perceptual loss based on vgg
-        main_loss = nn.L1Loss() + VGGPerceptualLoss()
+        main_loss  = VGGPerceptualLoss().to(device)
     
     train_loss = np.zeros((epochs,train_data_len)) #lists to store the losses of discriminator and generator
     val_loss = np.zeros((epochs,val_data_len)) #lists to store the losses of discriminator and generator
