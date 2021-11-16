@@ -4,7 +4,7 @@ import numpy as np
 from tqdm import tqdm
 import torch.optim as optim
 from torch.optim.lr_scheduler import StepLR
-from losses import SSIMLoss, generator_loss, discriminator_loss, generator_loss_separately, adversarial_loss, NRMSELoss
+from losses import SSIMLoss, generator_loss, discriminator_loss, generator_loss_separately, adversarial_loss, NRMSELoss, VGGPerceptualLoss
 from plotter import plotter_GAN, plotter_UNET
 
 
@@ -197,6 +197,8 @@ def UNET_training(hparams):
         main_loss  = nn.L1Loss()
     elif (hparams.loss_type=='L2'):
         main_loss  = nn.MSELoss() #same as L2 loss
+    elif (hparams.loss_type=='Perc_L'):#perceptual loss based on vgg
+        main_loss = nn.L1Loss() + VGGPerceptualLoss()
     
     train_loss = np.zeros((epochs,train_data_len)) #lists to store the losses of discriminator and generator
     val_loss = np.zeros((epochs,val_data_len)) #lists to store the losses of discriminator and generator
@@ -250,7 +252,7 @@ def UNET_training(hparams):
                 loss_val = main_loss(generated_image, target_img)
             val_loss[epoch,index] = loss_val.cpu().detach().numpy()
     # Save models
-    local_dir = hparams.global_dir + '/learning_rate_{:.4f}_epochs_{}_lambda_{}'.format(hparams.lr,hparams.epochs,hparams.Lambda) 
+    local_dir = hparams.global_dir + '/learning_rate_{:.4f}_epochs_{}_lambda_{}_loss_type'.format(hparams.lr,hparams.epochs,hparams.Lambda,hparams.loss_type) 
     if not os.path.isdir(local_dir):
         os.makedirs(local_dir)
     tosave_weights = local_dir +'/saved_weights.pt' 
