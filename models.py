@@ -41,10 +41,9 @@ class Discriminator(nn.Module):
             norm_layer(ndf * nf_mult),
             nn.LeakyReLU(0.2, True)
         ]
-        #remove the sigmoid and put it in the end, do we really need the sigmoid here, original
-        # pix2pix doesnot have the sigmoid here in the end. 
+        # Remove the sigmoid and instead use the nn.BCEWithLogitsLoss(), it would be automatically taken care off
         sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw,
-                               bias=False), nn.Sigmoid()]  # output 1 channel prediction map
+                               bias=False)]  # output 1 channel prediction map
         self.model = nn.Sequential(*sequence)
 
     def forward(self, input):
