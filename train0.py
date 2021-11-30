@@ -27,7 +27,7 @@ parser = argparse.ArgumentParser(description='Reading args for running the deep 
 parser.add_argument('-e','--epochs', type=int, default=100, metavar='', help = 'number of epochs to train the network') #positional argument
 parser.add_argument('-rs','--random_seed', type=int, default=80, metavar='', help = 'Random reed for the PRNGs of the training') #optional argument
 parser.add_argument('-lr','--learn_rate', type=float, default=0.0001, metavar='', help = 'Learning rate for the network') #optional argument
-parser.add_argument('-ma','--model_arc', type=str, default='UNET', metavar='',choices=['UNET', 'GAN'], help = 'Choose the type of network to learn')
+parser.add_argument('-ma','--model_arc', type=str, default='GAN', metavar='',choices=['UNET', 'GAN'], help = 'Choose the type of network to learn')
 parser.add_argument('-mm','--model_mode', type=str, default='Full_img', metavar='',choices=['Full_img', 'Patch'], help = 'Choose the mode to train the network either pass full image or patches')
 parser.add_argument('-l','--loss_type', type=str, default='Perc_L', metavar='',choices=['SSIM', 'L1', 'L2', 'Perc_L'], help = 'Choose the loss type for the main network')
 parser.add_argument('-G','--GPU_idx',  type =int, default=2, metavar='',  help='GPU to Use')
@@ -118,8 +118,11 @@ Discriminator1 = Discriminator(input_nc = hparams.n_channels).to(hparams.device)
 Discriminator1.train()
 
 import torchvision.models as models
-vgg16 = models.vgg16()
-Discriminator2 = vgg16.to(device)
+# vgg16 = models.vgg16() #going to use this for the preceptual loss, hence using resnet for the discriminator
+#https://discuss.pytorch.org/t/modify-resnet-or-vgg-for-single-channel-grayscale/22762
+# above link recommends using resnet instead of vgg as it is more powerful
+resnet = models.resnet18()
+Discriminator2 = resnet.to(device)
 
 hparams.generator     = UNet1
 hparams.discriminator = Discriminator2 #now using the vgg network as the discriminator

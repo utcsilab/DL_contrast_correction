@@ -46,6 +46,9 @@ def GAN_training(hparams):#separate function for doing generative training
         main_loss  = nn.L1Loss()
     elif (hparams.loss_type=='L2'):
         main_loss  = nn.MSELoss() #same as L2 loss
+    elif (hparams.loss_type=='Perc_L'):#perceptual loss based on vgg
+        main_loss  = nn.L1Loss() #I will add the VGG loss later during the loss calculation time
+    VGG_loss  = VGGPerceptualLoss().to(device)
     # figuring out the issue with weak discriminator in training GAN
 
     disc_epoch = hparams.disc_epoch #discriminator will be trained 10 times as much as generator and it will be trained first
@@ -129,9 +132,9 @@ def GAN_training(hparams):#separate function for doing generative training
                 gen_loss = adversarial_loss(G, real_target)
                 #the 1 tensor need to be changed based on the max value in the input images
                 if (hparams.loss_type=='SSIM'):
-                    loss_val = main_loss(generated_image, target_img, torch.tensor([1]).to(device))
+                    loss_val = main_loss(generated_image, target_img, torch.tensor([1]).to(device)) + VGG_loss(generated_image, target_img)
                 else:
-                    loss_val = main_loss(generated_image, target_img)
+                    loss_val = main_loss(generated_image, target_img) + VGG_loss(generated_image, target_img)
                 G_loss = gen_loss + (Lambda* loss_val)  
                 # compute gradients and run optimizer step
                 G_optimizer.zero_grad()
