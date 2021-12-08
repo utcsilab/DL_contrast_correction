@@ -47,9 +47,8 @@ def GAN_training(hparams):#separate function for doing generative training
     elif (hparams.loss_type=='L2'):
         main_loss  = nn.MSELoss() #same as L2 loss
     elif (hparams.loss_type=='Perc_L'):#perceptual loss based on vgg
-        main_loss  = nn.L1Loss() #I will add the VGG loss later during the loss calculation time
+        main_loss  = VGGPerceptualLoss().to(device) #all loss have VGG added to them now
     VGG_loss  = VGGPerceptualLoss().to(device)
-    # figuring out the issue with weak discriminator in training GAN
 
     disc_epoch = hparams.disc_epoch #discriminator will be trained 10 times as much as generator and it will be trained first
     gen_epoch  = hparams.gen_epoch #generator will be trained for these many iterations 
@@ -109,7 +108,6 @@ def GAN_training(hparams):#separate function for doing generative training
         # D_loss_real[epoch,:] =  D_loss_real[epoch,:]/disc_epoch
         # D_loss_fake[epoch,:] =  D_loss_fake[epoch,:]/disc_epoch
 
-
         for gen_epoch_idx in range(gen_epoch):
             for index, (input_img, target_img, params) in enumerate(train_loader):
                 if (hparams.mode=='Patch'):
@@ -131,6 +129,7 @@ def GAN_training(hparams):#separate function for doing generative training
         
                 gen_loss = adversarial_loss(G, real_target)
                 #the 1 tensor need to be changed based on the max value in the input images
+                # by default perceptual loss is added to all losses
                 if (hparams.loss_type=='SSIM'):
                     loss_val = main_loss(generated_image, target_img, torch.tensor([1]).to(device)) + VGG_loss(generated_image, target_img)
                 else:
@@ -187,12 +186,11 @@ def UNET_training(hparams):
     train_loader = hparams.train_loader 
     val_loader   = hparams.val_loader   
     patch_size   = hparams.patch_size
-    G_optimizer = optim.Adam(UNet1.parameters(), lr=lr)#right now choosing Adam, other option is SGD
-    scheduler = StepLR(G_optimizer, hparams.step_size, gamma=hparams.decay_gamma)
+    G_optimizer  = optim.Adam(UNet1.parameters(), lr=lr)#right now choosing Adam, other option is SGD
+    scheduler    = StepLR(G_optimizer, hparams.step_size, gamma=hparams.decay_gamma)
     # initialize arrays for storing losses
     train_data_len = train_loader.__len__() # length of training_generator
     val_data_len = val_loader.__len__()
-    # Criterions
     # Criterions or losses to choose from
     if (hparams.loss_type=='SSIM'):
         main_loss  = SSIMLoss().to(device)
@@ -202,7 +200,7 @@ def UNET_training(hparams):
         main_loss  = nn.MSELoss() #same as L2 loss
     elif (hparams.loss_type=='Perc_L'):#perceptual loss based on vgg
         main_loss  = VGGPerceptualLoss().to(device)
-    
+    VGG_loss  = VGGPerceptualLoss().to(device)
     train_loss = np.zeros((epochs,train_data_len)) #lists to store the losses of discriminator and generator
     val_loss = np.zeros((epochs,val_data_len)) #lists to store the losses of discriminator and generator
     if (hparams.mode=='Patch'):
@@ -223,10 +221,11 @@ def UNET_training(hparams):
             generated_image = UNet1(input_img)
 
             #the 1 tensor need to be changed based on the max value in the input images
+            # by default now every loss will have the perceptual loss included
             if (hparams.loss_type=='SSIM'):
-                loss_val = main_loss(generated_image, target_img, torch.tensor([1]).to(device))
+                loss_val = main_loss(generated_image, target_img, torch.tensor([1]).to(device)) + VGG_loss(generated_image, target_img)
             else:
-                loss_val = main_loss(generated_image, target_img)
+                loss_val = main_loss(generated_image, target_img) + VGG_loss(generated_image, target_img)
 
             # compute gradients and run optimizer step
             G_optimizer.zero_grad()

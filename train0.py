@@ -29,7 +29,7 @@ parser.add_argument('-rs','--random_seed', type=int, default=80, metavar='', hel
 parser.add_argument('-lr','--learn_rate', type=float, default=0.0001, metavar='', help = 'Learning rate for the network') #optional argument
 parser.add_argument('-ma','--model_arc', type=str, default='GAN', metavar='',choices=['UNET', 'GAN'], help = 'Choose the type of network to learn')
 parser.add_argument('-mm','--model_mode', type=str, default='Full_img', metavar='',choices=['Full_img', 'Patch'], help = 'Choose the mode to train the network either pass full image or patches')
-parser.add_argument('-l','--loss_type', type=str, default='Perc_L', metavar='',choices=['SSIM', 'L1', 'L2', 'Perc_L'], help = 'Choose the loss type for the main network')
+parser.add_argument('-l','--loss_type', type=str, default='L1', metavar='',choices=['SSIM', 'L1', 'L2', 'Perc_L'], help = 'Choose the loss type for the main network')
 parser.add_argument('-G','--GPU_idx',  type =int, default=2, metavar='',  help='GPU to Use')
 parser.add_argument('-lb','--Lambda', type=float, default=1,metavar='', help = 'variable to weight loss fn w.r.t adverserial loss')
 parser.add_argument('-df','--data_file', type=str, default='mdme_data', metavar='',choices=['mdme_data', 'available_input_data'], help = 'Data on which the model need to be trained')
@@ -37,8 +37,6 @@ parser.add_argument('-de','--disc_epoch', type=int, default=10, metavar='', help
 parser.add_argument('-ge','--gen_epoch', type=int, default=10, metavar='', help = 'epochs for training the gen separately')
 args = parser.parse_args()
 # print(args) #print the read arguments
-
-
 
 random_seed = args.random_seed  #changed to 80 to see the trianing behaviour on a different set
 torch.manual_seed(random_seed)
@@ -84,7 +82,6 @@ if hparams.mode == 'Patch':
 
 print(hparams) #print the given parameters till now
 
-
 # Global directory
 global_dir = hparams.root_dir  + 'train_results/model_%s_input_data_%s_loss_type_%s_mode_%s'\
     %(hparams.model_arc, hparams.data_file, hparams.loss_type, hparams.mode) 
@@ -114,8 +111,8 @@ UNet1.train()
 
 # print('Number of parameters in the generator:- ', np.sum([np.prod(p.shape) for p in UNet1.parameters() if p.requires_grad]))
 
-Discriminator1 = Discriminator(input_nc = hparams.n_channels).to(hparams.device)
-Discriminator1.train()
+# Discriminator1 = Discriminator(input_nc = hparams.n_channels).to(hparams.device)
+# Discriminator1.train()
 
 import torchvision.models as models
 # vgg16 = models.vgg16() #going to use this for the preceptual loss, hence using resnet for the discriminator
