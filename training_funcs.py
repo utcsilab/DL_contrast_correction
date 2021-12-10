@@ -24,6 +24,7 @@ def GAN_training(hparams):#separate function for doing generative training
     epochs = hparams.epochs
     lr = hparams.lr
     Lambda = hparams.Lambda
+    Lambda_b = hparams.Lambda_b
     UNet1 = hparams.generator
     Discriminator1 = hparams.discriminator
     train_loader = hparams.train_loader 
@@ -131,9 +132,9 @@ def GAN_training(hparams):#separate function for doing generative training
                 #the 1 tensor need to be changed based on the max value in the input images
                 # by default perceptual loss is added to all losses
                 if (hparams.loss_type=='SSIM'):
-                    loss_val = main_loss(generated_image, target_img, torch.tensor([1]).to(device)) + VGG_loss(generated_image, target_img)
+                    loss_val = main_loss(generated_image, target_img, torch.tensor([1]).to(device)) + Lambda_b*VGG_loss(generated_image, target_img)
                 else:
-                    loss_val = main_loss(generated_image, target_img) + VGG_loss(generated_image, target_img)
+                    loss_val = main_loss(generated_image, target_img) + Lambda_b*VGG_loss(generated_image, target_img)
                 G_loss = gen_loss + (Lambda* loss_val)  
                 # compute gradients and run optimizer step
                 G_optimizer.zero_grad()
@@ -156,7 +157,7 @@ def GAN_training(hparams):#separate function for doing generative training
         # Scheduler
         G_scheduler.step()
     # Save models
-    local_dir = hparams.global_dir + '/learning_rate_{:.4f}_epochs_{}_lambda_{}_gen_epoch_{}_disc_epoch_{}'.format(hparams.lr,hparams.epochs,hparams.Lambda,hparams.gen_epoch,hparams.disc_epoch) 
+    local_dir = hparams.global_dir + '/learning_rate_{:.4f}_epochs_{}_lambda_{}_gen_epoch_{}_disc_epoch_{}_Lambda_b{}'.format(hparams.lr,hparams.epochs,hparams.Lambda,hparams.gen_epoch,hparams.disc_epoch,Lambda_b) 
     if not os.path.isdir(local_dir):
         os.makedirs(local_dir)
     tosave_weights = local_dir +'/saved_weights.pt' 
