@@ -13,9 +13,9 @@ from losses import SSIMLoss, generator_loss, discriminator_loss, generator_loss_
 import torchvision.models as models
 vgg16 = models.vgg16()
 
-os.chdir('/home/sidharth/sid_notebooks/UNET_GAN2_training/train_results/model_GAN_input_data_mdme_data_loss_type_L1_mode_Full_img/learning_rate_0.0005_epochs_10_lambda_1_gen_epoch_10_disc_epoch_10')
+# os.chdir('/home/sidharth/sid_notebooks/UNET_GAN2_training/train_results/model_GAN_input_data_mdme_data_loss_type_L1_mode_Full_img/learning_rate_0.0001_epochs_10_lambda_1_gen_epoch_10_disc_epoch_10')
 
-# os.chdir('/home/sidharth/sid_notebooks/UNET_GAN2_training/train_results/model_UNET_input_data_mdme_data_loss_type_L1_mode_Full_img/learning_rate_0.0005_epochs_150_lambda_1_loss_type')
+os.chdir('/home/sidharth/sid_notebooks/UNET_GAN2_training/train_results/model_UNET_input_data_mdme_data_loss_type_L1_mode_Full_img/learning_rate_0.0001_epochs_150_lambda_1_loss_typeL1_Lambda_b100.0')
 saved_results = torch.load('saved_weights.pt',map_location='cpu')
 hparams   =  saved_results['hparams']
 hparams.device = 'cpu' #all gpus are clogged
@@ -24,7 +24,7 @@ UNet1.load_state_dict(saved_results['model_state_dict'])
 UNet1.eval()
 val_loader = hparams.val_loader
 # local_dir = hparams.global_dir + '/Test_images_learning_rate_{:.4f}_epochs_{}_lambda_{}'.format(hparams.lr,hparams.epochs,hparams.Lambda) 
-local_dir = hparams.global_dir + '/Test_images_learning_rate_{:.4f}_epochs_{}_lambda_{}_{}_disc_epochs_{}'.format(hparams.lr,hparams.epochs,hparams.Lambda,hparams.model_arc,hparams.disc_epoch) 
+local_dir = hparams.global_dir + '/Test_images_learning_rate_{:.4f}_epochs_{}_lambda_{}_{}_gen_epochs_{}_disc_epoch_{}_Lambda_b{}'.format(hparams.lr,hparams.epochs,hparams.Lambda,hparams.model_arc,hparams.gen_epoch,hparams.disc_epoch,hparams.Lambda_b) 
 
 print(local_dir)
 if not os.path.exists(local_dir):
