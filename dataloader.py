@@ -63,6 +63,9 @@ class Exp_contrast_Dataset(Dataset):
         return len(self.datafiles)
 
     def __getitem__(self, idx):
+        #first check if idx is list or integer
+        #if interger then current code works
+        # if list then for loop over the list and combine them into tensor and return 
         X = self.X_array[idx]
         y = self.y_array[idx]
         params = self.params_array[idx]
