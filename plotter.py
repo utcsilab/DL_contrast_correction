@@ -3,8 +3,13 @@ import matplotlib.pyplot as plt
 import torch
 plt.rcParams.update({'font.size': 18})
 plt.ioff(); plt.close('all')
-
+"""
+The aim of this script was to generate the resultant images after the training is done.
+Separate images were generated for the train and val set. The generated images are becoming too large in number
+need to only generate a fraction of images to declutter the results. 
+"""
 def plotter_GAN(hparams,tosave_weights,local_dir,UNet1,train_loader,val_loader):
+    #plot the GAN training results
     saved_results = torch.load(tosave_weights)
     G_loss_l1   =  saved_results['G_loss_l1']
     G_loss_adv  =  saved_results['G_loss_adv']
@@ -78,6 +83,7 @@ def plotter_GAN(hparams,tosave_weights,local_dir,UNet1,train_loader,val_loader):
 
 
 def plotter_UNET(hparams,tosave_weights,local_dir,UNet1,train_loader,val_loader):
+    # plot the UNET training results
     saved_results =  torch.load(tosave_weights)
     train_loss    =  saved_results['train_loss']
     val_loss      =  saved_results['val_loss']

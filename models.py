@@ -7,6 +7,7 @@ from torch import nn
 # https://learnopencv.com/paired-image-to-image-translation-pix2pix/
 # Keep doing a batch wise
 # this have 5 conv layers
+# this discriminator is very basic one, so I have moved onto using a Resnet for the discriminator instead
 class Discriminator(nn.Module):
     """Defines a PatchGAN discriminator"""
     def __init__(self, input_nc, ndf = 64, n_layers = 3, norm_layer=nn.BatchNorm2d):

@@ -1,4 +1,6 @@
 #!/bin/bash
+# bash script to run multiple simulations one after another to automate stuff
+# need to look at how to do parrallel runs on multiple gpus
 for model_type in GAN #UNET
 do
     for loss in  L1 SSIM # L2 #
