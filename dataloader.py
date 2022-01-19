@@ -27,6 +27,7 @@ can perform the required transform, as data size is less, transferring all files
 Need to change this dataloader class to be made similar to the way Jon suggested
 Maintain a text file for all the training/val/test samples and then take the text file as input to the dataloader
 """
+# this class should only take the txt file location
 class Exp_contrast_Dataset(Dataset):
     def __init__(self, root_dir, transform=None, target_transform=None):
         """
