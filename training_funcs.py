@@ -123,6 +123,7 @@ def GAN_training(hparams):#separate function for doing generative training
                 # this works for both
                 input_img, target_img = input_img.to(device), target_img.to(device) # Transfer to GPU
                 # generator forward pass
+                input_img, target_img = input_img.permute(1,0,2,3), target_img.permute(1,0,2,3)# to make it work with batch size > 1
                 generated_image = UNet1(input_img)
                 G = Discriminator1(generated_image)
 
