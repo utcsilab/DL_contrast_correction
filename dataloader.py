@@ -1,11 +1,9 @@
-import os 
-import torch
+import os, torch, h5py, glob, random
 import numpy as np
-import random
-import h5py
 from torch.utils.data import Dataset
+
 # Multicoil fastMRI dataset with various options
-class Dataset(Dataset):
+class Dataset1(Dataset):
     def __init__(self, datafiles):
         self.datafiles  = datafiles
 
@@ -39,25 +37,23 @@ class Exp_contrast_Dataset(Dataset):
         self.root_dir = root_dir
         self.transform = transform
         self.target_transform = target_transform
-        self.datafiles = os.listdir(path = root_dir + '/input')
-
+        with open(root_dir, "r") as text_file:
+            files = text_file.readlines()
+            files = [file.rstrip() for file in files]
+        self.datafiles = files
         # Initialize preloaded data arrays
         self.X_array, self.y_array, self.params_array = [], [], []
 
         # Walk through all files and preload data
+        os.chdir('/home/sidharth/sid_notebooks/')#change current working directory
         for datafile in self.datafiles:
-            # Construct local input file
-            filename = self.root_dir + '/input/' + datafile
-            with h5py.File(filename, 'r') as contents:
-                local_X = np.asarray(contents['image'])
-                local_TE, local_TR, local_TI = \
-                    np.asarray(contents['TE']), np.asarray(contents['TR']), \
-                    np.asarray(contents['TI'])
-                local_params = [local_TE, local_TR, local_TI]
-            # Construct local output file
-            filename = self.root_dir + '/output/' + datafile
-            with h5py.File(filename, 'r') as contents:
-                local_y = np.asarray(contents['image'])
+            loaded_data = torch.load(datafile)
+            local_X = np.asarray(loaded_data['input'])
+            local_y = np.asarray(loaded_data['output'])
+            local_TE, local_TR, local_TI = \
+                    np.asarray(loaded_data['TE']), np.asarray(loaded_data['TR']), \
+                    np.asarray(loaded_data['TI'])
+            local_params = [local_TE, local_TR, local_TI]
 
             # Place in preloaded arrays
             self.X_array.append(local_X)

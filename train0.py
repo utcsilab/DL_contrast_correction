@@ -24,7 +24,7 @@ import training_funcs
 import argparse
 
 parser = argparse.ArgumentParser(description='Reading args for running the deep network training')
-parser.add_argument('-e','--epochs', type=int, default=100, metavar='', help = 'number of epochs to train the network') #positional argument
+parser.add_argument('-e','--epochs', type=int, default=2, metavar='', help = 'number of epochs to train the network') #positional argument
 parser.add_argument('-rs','--random_seed', type=int, default=80, metavar='', help = 'Random reed for the PRNGs of the training') #optional argument
 parser.add_argument('-lr','--learn_rate', type=float, default=0.0001, metavar='', help = 'Learning rate for the network') #optional argument
 parser.add_argument('-ma','--model_arc', type=str, default='GAN', metavar='',choices=['UNET', 'GAN'], help = 'Choose the type of network to learn')
@@ -92,7 +92,7 @@ if not os.path.exists(global_dir):
 hparams.global_dir = global_dir
 
 # Creating the dataloaders
-data_dir = hparams.root_dir + hparams.data_file
+data_dir = hparams.root_dir + 'repo_text_files/training_samples.txt'
 dataset = Exp_contrast_Dataset(data_dir,transform=transforms.Compose([
     Normalize_by_max(),Toabsolute()]))
 
