@@ -76,6 +76,7 @@ def GAN_training(hparams):#separate function for doing generative training
                 else:
                     input_img, target_img = input_img[None,...], target_img[None,...]
                 # this works for both
+                # input_img, target_img = input_img.permute(1,0,2,3), target_img.permute(1,0,2,3)
                 input_img, target_img = input_img.to(device), target_img.to(device) # Transfer to GPU
 
                 generated_image = UNet1(input_img)
