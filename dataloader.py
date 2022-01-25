@@ -30,7 +30,7 @@ class Exp_contrast_Dataset(Dataset):
     def __init__(self, root_dir, transform=None, target_transform=None):
         """
         Args:
-            root_dir (string): Directory with all the images.
+            root_dir (string): Directory location of the text file containing files that need to be in the dataloader.
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """

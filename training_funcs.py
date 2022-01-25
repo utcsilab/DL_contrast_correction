@@ -31,7 +31,6 @@ def GAN_training(hparams):#separate function for doing generative training
     val_loader   = hparams.val_loader   
     patch_size   = hparams.patch_size
     patch_stride = hparams.patch_stride
-    Disc_train_freq = hparams.Disc_train_freq #frequency at which discriminator is trained as compared to the generator
 
     # choosing betas after talking with Ali, this are required for the case of GANs
     G_optimizer = optim.Adam(UNet1.parameters(), lr=lr, betas=(0.5, 0.999))
