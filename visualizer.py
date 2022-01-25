@@ -13,7 +13,7 @@ from losses import SSIMLoss, generator_loss, discriminator_loss, generator_loss_
 import torchvision.models as models
 vgg16 = models.vgg16()
 
-os.chdir('/home/sidharth/sid_notebooks/UNET_GAN2_training/train_results/model_GAN_input_data_mdme_data_loss_type_L1_mode_Full_img/learning_rate_0.0001_epochs_10_lambda_1_gen_epoch_10_disc_epoch_10')
+os.chdir('/home/sidharth/sid_notebooks/UNET_GAN2_training/train_results/model_GAN_input_data_text_mdme_data_loss_type_L1_mode_Full_img/learning_rate_0.0001_epochs_10_lambda_1_gen_epoch_10_disc_epoch_10_Lambda_b1')
 
 # os.chdir('/home/sidharth/sid_notebooks/UNET_GAN2_training/train_results/model_UNET_input_data_mdme_data_loss_type_L1_mode_Full_img/learning_rate_0.0001_epochs_150_lambda_1_loss_typeL1_Lambda_b100.0')
 saved_results = torch.load('saved_weights.pt',map_location='cpu')
@@ -36,11 +36,11 @@ if not os.path.exists(local_dir):
 # Discriminator1(input_img[None,...].to(hparams.device)) 
 
 
-hparams.data_file   =  'mdme_data_subject15'#'subject13_data'
+hparams.data_file   =  'repo_text_files/test_samples.txt'#'subject13_data'
 data_dir = hparams.root_dir + hparams.data_file
 dataset = Exp_contrast_Dataset(data_dir,transform=transforms.Compose([
     Normalize_by_max(),Toabsolute()]))
-test_loader           = torch.utils.data.DataLoader(dataset, batch_size=hparams.batch_size, shuffle=False)
+test_loader           = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False)
 print('Test data length:- ',test_loader.__len__())
 
 SSIM       = SSIMLoss()
@@ -93,8 +93,10 @@ for index, (input_img, target_img, params) in enumerate(test_loader):
     plt.colorbar()
         # Save
     plt.tight_layout()
-    plt.savefig(local_dir + '/test_image_TE = {}, TR = {}, TI = {}_{}.png'.format(*params[0],params[1]), dpi=100)
+    plt.savefig(local_dir + '/test_image_TE = {}, TR = {}, TI = {}_{}.png'.format(int(params[0][0]),int(params[0][1]),int(params[0][2]),str(params[1])[31:50]), dpi=100)
     plt.close()
+    if(index>50):
+        exit()
 
 
 exit()
