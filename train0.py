@@ -31,7 +31,7 @@ parser.add_argument('-ma','--model_arc', type=str, default='GAN', metavar='',cho
 parser.add_argument('-mm','--model_mode', type=str, default='Full_img', metavar='',choices=['Full_img', 'Patch'], help = 'Choose the mode to train the network either pass full image or patches')
 parser.add_argument('-ps','--patch_size',type=int,default=72,metavar='',help='size of patches')
 parser.add_argument('-pst','--patch_stride',type=int,default=72,metavar='',help='stride of patches')
-parser.add_argument('-l','--loss_type', type=str, default='L1', metavar='',choices=['SSIM', 'L1', 'L2', 'Perc_L'], help = 'Choose the loss type for the main network')
+parser.add_argument('-l','--loss_type', type=str, default='L1', metavar='',choices=['SSIM', 'L1', 'L2'], help = 'Choose the loss type for the main network')
 parser.add_argument('-G','--GPU_idx',  type =int, default=4, metavar='',  help='GPU to Use')
 parser.add_argument('-lb','--Lambda', type=float, default=1,metavar='', help = 'variable to weight loss fn w.r.t adverserial loss')
 parser.add_argument('-lb_b','--Lambda_b', type=float, default=1,metavar='', help = 'variable to weight loss fn w.r.t perceptual loss')
@@ -43,11 +43,9 @@ parser.add_argument('-b','--batch_size',type=int,default=10,metavar='',help='bat
 parser.add_argument('-ss','--step_size',type=int,default=10,metavar='',help='Number of epochs to decay with gamma')
 parser.add_argument('-dg','--decay_gamma',type=float, default=0.5, metavar='', help = 'gamma decay rate')
 parser.add_argument('-nc','--n_channels',type=int,default=1,metavar='',help='number of channels for UNET')
-
+parser.add_argument('-rd','--root_dir', type=str, default='/home/sidharth/sid_notebooks/UNET_GAN2_training/', metavar='', help = 'root directory where all the code is')
 args = parser.parse_args()
 # saved params.sh and then give that as input to the 
-
-args.root_dir    = '/home/sidharth/sid_notebooks/UNET_GAN2_training/'
 
 print(args) #print the given parameters till now
 
@@ -64,23 +62,22 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 device = torch.device("cuda:{}".format(args.GPU_idx) if torch.cuda.is_available() else "cpu")
 args.device      = device
 
-# Global directory
+# Global directory where results will be stored for the network training runs
 global_dir = args.root_dir  + 'train_results/model_%s_input_data_%s_loss_type_%s_mode_%s'\
-    %(args.model_arc, args.data_file, args.loss_type, args.mode) 
+    %(args.model_arc, args.data_file, args.loss_type, args.model_mode) 
 if not os.path.exists(global_dir):
     os.makedirs(global_dir)
 args.global_dir = global_dir
 
 # Creating the dataloaders
 # have the training text file location in the argparser
-data_dir = args.root_dir + 'repo_text_files/training_samples.txt'
-dataset = Exp_contrast_Dataset(data_dir,transform=transforms.Compose([
+train_data_dir = args.root_dir + 'repo_text_files/training_samples.txt'
+train_dataset = Exp_contrast_Dataset(train_data_dir,transform=transforms.Compose([
     Normalize_by_max(),Toabsolute()]))
 
-dataset_size = len(dataset)
-train_size = int( (1 - args.val_split) * (dataset_size))
-test_size = (dataset_size) - train_size
-train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
+val_data_dir = args.root_dir + 'repo_text_files/val_samples.txt'
+val_dataset = Exp_contrast_Dataset(val_data_dir,transform=transforms.Compose([
+    Normalize_by_max(),Toabsolute()]))
 
 train_loader         = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
 val_loader           = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
@@ -93,7 +90,6 @@ UNet1 = Unet(in_chans = args.n_channels, out_chans=args.n_channels,chans=args.fi
 UNet1.train()
 
 # print('Number of parameters in the generator:- ', np.sum([np.prod(p.shape) for p in UNet1.parameters() if p.requires_grad]))
-
 # Discriminator1 = Discriminator(input_nc = hparams.n_channels).to(hparams.device)
 # Discriminator1.train()
 

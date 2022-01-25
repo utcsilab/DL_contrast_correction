@@ -22,7 +22,7 @@ def GAN_training(hparams):#separate function for doing generative training
     #load the parameters of interest
     device = hparams.device  
     epochs = hparams.epochs
-    lr = hparams.lr
+    lr = hparams.learn_rate
     Lambda = hparams.Lambda
     Lambda_b = hparams.Lambda_b
     UNet1 = hparams.generator
@@ -35,8 +35,8 @@ def GAN_training(hparams):#separate function for doing generative training
     # choosing betas after talking with Ali, this are required for the case of GANs
     G_optimizer = optim.Adam(UNet1.parameters(), lr=lr, betas=(0.5, 0.999))
     G_scheduler = StepLR(G_optimizer, hparams.step_size, gamma=hparams.decay_gamma)
-    D_optimizer = optim.Adam(Discriminator1.parameters(), lr=0.00001, betas=(0.5, 0.999))
-    D_scheduler = StepLR(D_optimizer, 5, 0.5)
+    D_optimizer = optim.Adam(Discriminator1.parameters(), lr=lr, betas=(0.5, 0.999))
+    D_scheduler = StepLR(D_optimizer, hparams.step_size, hparams.decay_gamma)
     # initialize arrays for storing losses
     train_data_len = train_loader.__len__() # length of training_generator
     # Criterions or losses to choose from
@@ -46,11 +46,9 @@ def GAN_training(hparams):#separate function for doing generative training
         main_loss  = nn.L1Loss()
     elif (hparams.loss_type=='L2'):
         main_loss  = nn.MSELoss() #same as L2 loss
-    elif (hparams.loss_type=='Perc_L'):#perceptual loss based on vgg
-        main_loss  = VGGPerceptualLoss().to(device) #all loss have VGG added to them now
-    VGG_loss  = VGGPerceptualLoss().to(device)
+    VGG_loss  = VGGPerceptualLoss().to(device) #perceptual loss 
 
-    disc_epoch = hparams.disc_epoch #discriminator will be trained 10 times as much as generator and it will be trained first
+    disc_epoch = hparams.disc_epoch #discriminator will be trained these many times
     gen_epoch  = hparams.gen_epoch #generator will be trained for these many iterations 
 
     #lists to store the losses of discriminator and generator
@@ -60,14 +58,14 @@ def GAN_training(hparams):#separate function for doing generative training
     G_loss_list, D_loss_list = np.zeros((epochs,gen_epoch,train_data_len)), np.zeros((epochs,disc_epoch,train_data_len))
     D_out_acc                = np.zeros((epochs,disc_epoch,train_data_len))
     accuracy_results         = np.zeros((epochs,disc_epoch))
-    if (hparams.mode=='Patch'):
+    if (hparams.model_mode=='Patch'):
         unfold = torch.nn.Unfold(kernel_size=patch_size, stride=patch_stride) # Unfold kernel
     # Loop over epochs
     for epoch in tqdm(range(epochs), total=epochs, leave=True):
         # at each epoch I re-initiate the discriminator optimizer
-        for disc_epoch_idx in range(disc_epoch):
+        for disc_epoch_idx in range(disc_epoch):#first training the discriminator
             for index, (input_img, target_img, params) in enumerate(train_loader):
-                if (hparams.mode=='Patch'):
+                if (hparams.model_mode=='Patch'):
                     unfolded_in, unfolded_out = unfold(input_img[None,...]), unfold(target_img[None,...])
                     patches_in,  patches_out  = unfolded_in.reshape(1,patch_size,patch_size,-1), unfolded_out.reshape(1,patch_size,patch_size,-1)
                     patches_in,  patches_out  = patches_in.permute(3,0,1,2), patches_out.permute(3,0,1,2)
@@ -75,7 +73,6 @@ def GAN_training(hparams):#separate function for doing generative training
                 else:
                     input_img, target_img = input_img[None,...], target_img[None,...]
                 # this works for both
-                # input_img, target_img = input_img.permute(1,0,2,3), target_img.permute(1,0,2,3)
                 input_img, target_img = input_img.to(device), target_img.to(device) # Transfer to GPU
                 input_img, target_img = input_img.permute(1,0,2,3), target_img.permute(1,0,2,3)# to make it work with batch size > 1
 
@@ -112,7 +109,7 @@ def GAN_training(hparams):#separate function for doing generative training
 
         for gen_epoch_idx in range(gen_epoch):
             for index, (input_img, target_img, params) in enumerate(train_loader):
-                if (hparams.mode=='Patch'):
+                if (hparams.model_mode=='Patch'):
                     unfolded_in, unfolded_out = unfold(input_img[None,...]), unfold(target_img[None,...])
                     patches_in,  patches_out  = unfolded_in.reshape(1,patch_size,patch_size,-1), unfolded_out.reshape(1,patch_size,patch_size,-1)
                     patches_in,  patches_out  = patches_in.permute(3,0,1,2), patches_out.permute(3,0,1,2)
@@ -159,7 +156,7 @@ def GAN_training(hparams):#separate function for doing generative training
         # Scheduler
         G_scheduler.step()
     # Save models
-    local_dir = hparams.global_dir + '/learning_rate_{:.4f}_epochs_{}_lambda_{}_gen_epoch_{}_disc_epoch_{}_Lambda_b{}'.format(hparams.lr,hparams.epochs,hparams.Lambda,hparams.gen_epoch,hparams.disc_epoch,Lambda_b) 
+    local_dir = hparams.global_dir + '/learning_rate_{:.4f}_epochs_{}_lambda_{}_gen_epoch_{}_disc_epoch_{}_Lambda_b{}'.format(hparams.learn_rate,hparams.epochs,hparams.Lambda,hparams.gen_epoch,hparams.disc_epoch,Lambda_b) 
     if not os.path.isdir(local_dir):
         os.makedirs(local_dir)
     tosave_weights = local_dir +'/saved_weights.pt' 
@@ -184,7 +181,7 @@ def GAN_training(hparams):#separate function for doing generative training
 def UNET_training(hparams):
     device       = hparams.device  
     epochs       = hparams.epochs
-    lr           = hparams.lr
+    lr           = hparams.learn_rate
     UNet1        = hparams.generator
     train_loader = hparams.train_loader 
     val_loader   = hparams.val_loader   
@@ -207,12 +204,12 @@ def UNET_training(hparams):
     VGG_loss  = VGGPerceptualLoss().to(device)
     train_loss = np.zeros((epochs,train_data_len)) #lists to store the losses of discriminator and generator
     val_loss = np.zeros((epochs,val_data_len)) #lists to store the losses of discriminator and generator
-    if (hparams.mode=='Patch'):
+    if (hparams.model_mode=='Patch'):
         unfold = torch.nn.Unfold(kernel_size=hparams.patch_size, stride=hparams.patch_stride) # Unfold kernel
     # Loop over epochs
     for epoch in tqdm(range(epochs), total=epochs, leave=True):
         for index, (input_img, target_img, params) in enumerate(train_loader):
-            if (hparams.mode=='Patch'):
+            if (hparams.model_mode=='Patch'):
                 unfolded_in, unfolded_out = unfold(input_img[None,...]), unfold(target_img[None,...])
                 patches_in,  patches_out  = unfolded_in.reshape(1,patch_size,patch_size,-1), unfolded_out.reshape(1,patch_size,patch_size,-1)
                 patches_in,  patches_out  = patches_in.permute(3,0,1,2), patches_out.permute(3,0,1,2)
@@ -239,7 +236,7 @@ def UNET_training(hparams):
         # Scheduler
         scheduler.step()
         for index, (input_img, target_img, params) in enumerate(val_loader):
-            if (hparams.mode=='Patch'):
+            if (hparams.model_mode=='Patch'):
                 unfolded_in, unfolded_out = unfold(input_img[None,...]), unfold(target_img[None,...])
                 patches_in,  patches_out  = unfolded_in.reshape(1,patch_size,patch_size,-1), unfolded_out.reshape(1,patch_size,patch_size,-1)
                 patches_in,  patches_out  = patches_in.permute(3,0,1,2), patches_out.permute(3,0,1,2)
@@ -258,7 +255,7 @@ def UNET_training(hparams):
                 loss_val = main_loss(generated_image, target_img)
             val_loss[epoch,index] = loss_val.cpu().detach().numpy()
     # Save models
-    local_dir = hparams.global_dir + '/learning_rate_{:.4f}_epochs_{}_lambda_{}_loss_type{}_Lambda_b{}'.format(hparams.lr,hparams.epochs,hparams.Lambda,hparams.loss_type,Lambda_b) 
+    local_dir = hparams.global_dir + '/learning_rate_{:.4f}_epochs_{}_lambda_{}_loss_type{}_Lambda_b{}'.format(hparams.learn_rate,hparams.epochs,hparams.Lambda,hparams.loss_type,Lambda_b) 
     if not os.path.isdir(local_dir):
         os.makedirs(local_dir)
     tosave_weights = local_dir +'/saved_weights.pt' 
