@@ -73,9 +73,9 @@ def plotter_GAN(hparams,tosave_weights,local_dir,UNet1,train_loader,val_loader):
     plt.savefig(local_dir + '/GAN&DISC_loss_curves.png', dpi=100)
     plt.close()
 
-    if hparams.mode == 'Full_img':
+    if hparams.model_mode == 'Full_img':
         img_plotter(hparams, UNet1,val_loader,train_loader,local_dir)
-    elif(hparams.mode == 'Patch'):
+    elif(hparams.model_mode == 'Patch'):
         img_patch_plotter(hparams, UNet1,val_loader,train_loader,local_dir)
 
 
@@ -103,9 +103,9 @@ def plotter_UNET(hparams,tosave_weights,local_dir,UNet1,train_loader,val_loader)
     plt.savefig(local_dir + '/UNET_loss_curves.png', dpi=100)
     plt.close()
 
-    if hparams.mode == 'Full_img':
+    if hparams.model_mode == 'Full_img':
         img_plotter(hparams, UNet1,val_loader,train_loader,local_dir)
-    elif(hparams.mode == 'Patch'):
+    elif(hparams.model_mode == 'Patch'):
         img_patch_plotter(hparams, UNet1,val_loader,train_loader,local_dir)
 
 
@@ -113,13 +113,20 @@ def plotter_UNET(hparams,tosave_weights,local_dir,UNet1,train_loader,val_loader)
 # function for plotting the train and validation images
 def img_plotter(hparams, UNet1,val_loader,train_loader,local_dir):
     for index, (input_img, target_img, params) in enumerate(val_loader):
-        model_out = UNet1(input_img[None,...].to(hparams.device)) 
-        NN_output = model_out.cpu().detach().numpy().squeeze()
-        actual_out = target_img.cpu().detach().numpy().squeeze()
-        actual_in = input_img.cpu().detach().numpy().squeeze()
+        if(val_loader.batch_size==1):
+            TE, TR, TI = int(params[0][0]),int(params[0][1]),int(params[0][2])
+            file_identifier = str(params[1])[31:50]
+        else:
+            TE, TR, TI = int(params[0][0][0]),int(params[0][1][1]),int(params[0][2][2])
+            file_identifier = str(params[1][0])[31:50]
+
+        model_out = UNet1(input_img[:,None,...].to(hparams.device)) 
+        NN_output = model_out[0,...].cpu().detach().numpy().squeeze()
+        actual_out = target_img[0,...].cpu().detach().numpy().squeeze()
+        actual_in = input_img[0,...].cpu().detach().numpy().squeeze()
 
         plt.figure(figsize=(16,6))
-        plt.suptitle('Parameters of contrast:- (TE = {}, TR = {}, TI = {}) {}'.format(*params[0],params[1]), fontsize=16)
+        plt.suptitle('Parameters of contrast:- (TE = {}, TR = {}, TI = {}) {}'.format(TE, TR, TI, file_identifier), fontsize=16)
         plt.subplot(1,4,1)
         plt.imshow(np.abs(actual_in),cmap='gray',vmax=0.5,vmin=0)
         plt.title('Input')
@@ -142,18 +149,25 @@ def img_plotter(hparams, UNet1,val_loader,train_loader,local_dir):
         plt.colorbar()
             # Save
         plt.tight_layout()
-        plt.savefig(local_dir + '/val_image_TE = {}, TR = {}, TI = {}_{}.png'.format(*params[0],params[1]), dpi=100)
+        plt.savefig(local_dir + '/val_image_TE = {}, TR = {}, TI = {}_{}.png'.format(TE, TR, TI, file_identifier) , dpi=100)
         plt.close()
 
 
     for index, (input_img, target_img, params) in enumerate(train_loader):
-        model_out = UNet1(input_img[None,...].to(hparams.device)) 
-        NN_output = model_out.cpu().detach().numpy().squeeze()
-        actual_out = target_img.cpu().detach().numpy().squeeze()
-        actual_in = input_img.cpu().detach().numpy().squeeze()
+        if(train_loader.batch_size==1):
+            TE, TR, TI = int(params[0][0]),int(params[0][1]),int(params[0][2])
+            file_identifier = str(params[1])[31:50]
+        else:
+            TE, TR, TI = int(params[0][0][0]),int(params[0][1][1]),int(params[0][2][2])
+            file_identifier = str(params[1][0])[31:50]
+
+        model_out = UNet1(input_img[:,None,...].to(hparams.device)) 
+        NN_output = model_out[0,...].cpu().detach().numpy().squeeze()
+        actual_out = target_img[0,...].cpu().detach().numpy().squeeze()
+        actual_in = input_img[0,...].cpu().detach().numpy().squeeze()
 
         plt.figure(figsize=(16,6))
-        plt.suptitle('Parameters of contrast:- (TE = {}, TR = {}, TI = {}) {}'.format(*params[0],params[1]), fontsize=16)
+        plt.suptitle('Parameters of contrast:- (TE = {}, TR = {}, TI = {}) {}'.format(TE, TR, TI, file_identifier), fontsize=16)
         plt.subplot(1,4,1)
         plt.imshow(np.abs(actual_in),cmap='gray',vmax=0.5,vmin=0)
         plt.title('Input')
@@ -176,7 +190,7 @@ def img_plotter(hparams, UNet1,val_loader,train_loader,local_dir):
         plt.colorbar()
             # Save
         plt.tight_layout()
-        plt.savefig(local_dir + '/train_image_TE = {}, TR = {}, TI = {}_{}.png'.format(*params[0],params[1]), dpi=100)
+        plt.savefig(local_dir + '/train_image_TE = {}, TR = {}, TI = {}_{}.png'.format(TE, TR, TI, file_identifier), dpi=100)
         plt.close()
 
 
