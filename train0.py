@@ -27,7 +27,7 @@ parser = argparse.ArgumentParser(description='Reading args for running the deep 
 parser.add_argument('-e','--epochs', type=int, default=2, metavar='', help = 'number of epochs to train the network') #positional argument
 parser.add_argument('-rs','--random_seed', type=int, default=80, metavar='', help = 'Random reed for the PRNGs of the training') #optional argument
 parser.add_argument('-lr','--learn_rate', type=float, default=0.0001, metavar='', help = 'Learning rate for the network') #optional argument
-parser.add_argument('-ma','--model_arc', type=str, default='GAN', metavar='',choices=['UNET', 'GAN'], help = 'Choose the type of network to learn')
+parser.add_argument('-ma','--model_arc', type=str, default='UNET', metavar='',choices=['UNET', 'GAN'], help = 'Choose the type of network to learn')
 parser.add_argument('-mm','--model_mode', type=str, default='Full_img', metavar='',choices=['Full_img', 'Patch'], help = 'Choose the mode to train the network either pass full image or patches')
 parser.add_argument('-ps','--patch_size',type=int,default=72,metavar='',help='size of patches')
 parser.add_argument('-pst','--patch_stride',type=int,default=72,metavar='',help='stride of patches')

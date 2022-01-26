@@ -6,7 +6,7 @@ import torch.optim as optim
 from torch.optim.lr_scheduler import StepLR
 from losses import SSIMLoss, generator_loss, discriminator_loss, generator_loss_separately, adversarial_loss, NRMSELoss, VGGPerceptualLoss
 from plotter import plotter_GAN, plotter_UNET
-
+import sys
 
 def binary_acc(disc_out, actual_out):#function for calculating accuracy of discriminator
     m = nn.Sigmoid()#sigmoid is removed from the discriminator def to automatically handle the edge cases
@@ -175,6 +175,14 @@ def GAN_training(hparams):#separate function for doing generative training
         'D_out_fake':D_out_fake,
         'D_out_acc':D_out_acc,
         'hparams': hparams}, tosave_weights)
+    
+    sourceFile = open(local_dir +'/params_used.txt', 'w')
+    for arg in vars(hparams):
+        print(arg, '=', getattr(hparams, arg), file = sourceFile)
+        if(arg=='val_loader'):
+            break
+    # print(hparams, file = sourceFile)
+    sourceFile.close()
     plotter_GAN(hparams,tosave_weights,local_dir,UNet1,train_loader,val_loader)
 
 
@@ -218,6 +226,7 @@ def UNET_training(hparams):
                 input_img, target_img = input_img[None,...], target_img[None,...]
             # Transfer to GPU
             input_img, target_img = input_img.to(device), target_img.to(device)
+            input_img, target_img = input_img.permute(1,0,2,3), target_img.permute(1,0,2,3)# to make it work with batch size > 1
 
             generated_image = UNet1(input_img)
 
@@ -246,6 +255,8 @@ def UNET_training(hparams):
             # Transfer to GPU
             input_img, target_img = input_img.to(device), target_img.to(device)
 
+            input_img, target_img = input_img.permute(1,0,2,3), target_img.permute(1,0,2,3)# to make it work with batch size > 1
+
             generated_image = UNet1(input_img)
 
             #the 1 tensor need to be changed based on the max value in the input images
@@ -266,4 +277,11 @@ def UNET_training(hparams):
         'train_loss': train_loss,
         'val_loss': val_loss,
         'hparams': hparams}, tosave_weights)
+    sourceFile = open(local_dir +'/params_used.txt', 'w')
+    for arg in vars(hparams):
+        print(arg, '=', getattr(hparams, arg), file = sourceFile)
+        if(arg=='val_loader'):
+            break
+    # print(hparams, file = sourceFile)
+    sourceFile.close()
     plotter_UNET(hparams,tosave_weights,local_dir,UNet1,train_loader,val_loader)

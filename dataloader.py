@@ -72,33 +72,11 @@ class Exp_contrast_Dataset(Dataset):
         params = self.params_array[idx]
         ID = self.datafiles[idx]
             
-        # seed = np.random.randint(2147483647) # make a seed with numpy generator 
-        # seed = idx
         if self.transform is not None:
-            # random.seed(seed) # apply this seed to img transforms
-            # torch.manual_seed(seed) # needed for torchvision 0.7
-            # np.random.seed(seed)
             X = self.transform(X)
-            # random.seed(seed) # apply this seed to img transforms
-            # torch.manual_seed(seed) # needed for torchvision 0.7
-            # np.random.seed(seed)
             y = self.transform(y)
         return X.astype(np.float32), y.astype(np.float32), [params,ID]
 
-    def get_params(self, idx):
-        # to get the sequence parameters
-        ID = self.datafiles[idx]
-        with h5py.File(self.root_dir + '/input/'+ID, 'r') as F:
-            TR = np.array(F['TR'])
-            TE = np.array(F['TE'])
-            TI = np.array(F['TI'])
-        params = [TE,TR,TI]
-        print(ID)
-        return params
-
-    def get_filename(self, idx):# to get the actual filename
-        ID = self.datafiles[idx]
-        return ID
 
 class ToTensor(object):
     """Convert ndarrays in sample to Tensors."""
