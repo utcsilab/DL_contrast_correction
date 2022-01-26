@@ -117,7 +117,7 @@ def img_plotter(hparams, UNet1,val_loader,train_loader,local_dir):
             TE, TR, TI = int(params[0][0]),int(params[0][1]),int(params[0][2])
             file_identifier = str(params[1])[31:50]
         else:
-            TE, TR, TI = int(params[0][0][0]),int(params[0][1][1]),int(params[0][2][2])
+            TE, TR, TI = int(params[0][0][0]),int(params[0][1][0]),int(params[0][2][0])
             file_identifier = str(params[1][0])[31:50]
 
         model_out = UNet1(input_img[:,None,...].to(hparams.device)) 
@@ -158,7 +158,7 @@ def img_plotter(hparams, UNet1,val_loader,train_loader,local_dir):
             TE, TR, TI = int(params[0][0]),int(params[0][1]),int(params[0][2])
             file_identifier = str(params[1])[31:50]
         else:
-            TE, TR, TI = int(params[0][0][0]),int(params[0][1][1]),int(params[0][2][2])
+            TE, TR, TI = int(params[0][0][0]),int(params[0][1][0]),int(params[0][2][0])
             file_identifier = str(params[1][0])[31:50]
 
         model_out = UNet1(input_img[:,None,...].to(hparams.device)) 

@@ -26,8 +26,9 @@ import argparse
 parser = argparse.ArgumentParser(description='Reading args for running the deep network training')
 parser.add_argument('-e','--epochs', type=int, default=2, metavar='', help = 'number of epochs to train the network') #positional argument
 parser.add_argument('-rs','--random_seed', type=int, default=80, metavar='', help = 'Random reed for the PRNGs of the training') #optional argument
-parser.add_argument('-lr','--learn_rate', type=float, default=0.0001, metavar='', help = 'Learning rate for the network') #optional argument
-parser.add_argument('-ma','--model_arc', type=str, default='UNET', metavar='',choices=['UNET', 'GAN'], help = 'Choose the type of network to learn')
+parser.add_argument('-lr','--learn_rate', type=float, default=0.0001, metavar='', help = 'Learning rate for the Generator') #optional argument
+parser.add_argument('-dlr','--disc_learn_rate', type=float, default=0.00001, metavar='', help = 'Learning rate for the discriminator') #optional argument
+parser.add_argument('-ma','--model_arc', type=str, default='GAN', metavar='',choices=['UNET', 'GAN'], help = 'Choose the type of network to learn')
 parser.add_argument('-mm','--model_mode', type=str, default='Full_img', metavar='',choices=['Full_img', 'Patch'], help = 'Choose the mode to train the network either pass full image or patches')
 parser.add_argument('-ps','--patch_size',type=int,default=72,metavar='',help='size of patches')
 parser.add_argument('-pst','--patch_stride',type=int,default=72,metavar='',help='stride of patches')
@@ -35,7 +36,7 @@ parser.add_argument('-l','--loss_type', type=str, default='L1', metavar='',choic
 parser.add_argument('-G','--GPU_idx',  type =int, default=4, metavar='',  help='GPU to Use')
 parser.add_argument('-lb','--Lambda', type=float, default=1,metavar='', help = 'variable to weight loss fn w.r.t adverserial loss')
 parser.add_argument('-lb_b','--Lambda_b', type=float, default=1,metavar='', help = 'variable to weight loss fn w.r.t perceptual loss')
-parser.add_argument('-df','--data_file', type=str, default='text_mdme_data', metavar='',choices=['mdme_data', 'available_input_data'], help = 'Data on which the model need to be trained')
+parser.add_argument('-df','--data_file', type=str, default='repo_text_files_10', metavar='', help = 'Data on which the model need to be trained')
 parser.add_argument('-de','--disc_epoch', type=int, default=10, metavar='', help = 'epochs for training the disc separately') 
 parser.add_argument('-ge','--gen_epoch', type=int, default=10, metavar='', help = 'epochs for training the gen separately')
 parser.add_argument('-f','--filter',type=int, default=64, metavar='', help='num of filters for the UNET')
@@ -63,7 +64,7 @@ device = torch.device("cuda:{}".format(args.GPU_idx) if torch.cuda.is_available(
 args.device      = device
 
 # Global directory where results will be stored for the network training runs
-global_dir = args.root_dir  + 'train_results/model_%s_input_data_%s_loss_type_%s_mode_%s'\
+global_dir = args.root_dir  + 'train_results/model_%s_data_%s_loss_%s_mode_%s'\
     %(args.model_arc, args.data_file, args.loss_type, args.model_mode) 
 if not os.path.exists(global_dir):
     os.makedirs(global_dir)
@@ -71,11 +72,11 @@ args.global_dir = global_dir
 
 # Creating the dataloaders
 # have the training text file location in the argparser
-train_data_dir = args.root_dir + 'repo_text_files/training_samples.txt'
+train_data_dir = args.root_dir + args.data_file + '/training_samples.txt'
 train_dataset = Exp_contrast_Dataset(train_data_dir,transform=transforms.Compose([
     Normalize_by_max(),Toabsolute()]))
 
-val_data_dir = args.root_dir + 'repo_text_files/val_samples.txt'
+val_data_dir = args.root_dir + args.data_file +  '/val_samples.txt'
 val_dataset = Exp_contrast_Dataset(val_data_dir,transform=transforms.Compose([
     Normalize_by_max(),Toabsolute()]))
 

@@ -23,6 +23,7 @@ def GAN_training(hparams):#separate function for doing generative training
     device = hparams.device  
     epochs = hparams.epochs
     lr = hparams.learn_rate
+    disc_lr = hparams.disc_learn_rate
     Lambda = hparams.Lambda
     Lambda_b = hparams.Lambda_b
     UNet1 = hparams.generator
@@ -35,7 +36,7 @@ def GAN_training(hparams):#separate function for doing generative training
     # choosing betas after talking with Ali, this are required for the case of GANs
     G_optimizer = optim.Adam(UNet1.parameters(), lr=lr, betas=(0.5, 0.999))
     G_scheduler = StepLR(G_optimizer, hparams.step_size, gamma=hparams.decay_gamma)
-    D_optimizer = optim.Adam(Discriminator1.parameters(), lr=lr, betas=(0.5, 0.999))
+    D_optimizer = optim.Adam(Discriminator1.parameters(), lr=disc_lr, betas=(0.5, 0.999))
     D_scheduler = StepLR(D_optimizer, hparams.step_size, hparams.decay_gamma)
     # initialize arrays for storing losses
     train_data_len = train_loader.__len__() # length of training_generator
@@ -80,7 +81,6 @@ def GAN_training(hparams):#separate function for doing generative training
                 G = Discriminator1(generated_image)
 
                 # ground truth labels real and fake
-                #using soft targets
                 real_target = torch.ones(list(G.size())).to(device)
                 fake_target = torch.zeros(list(G.size())).to(device)
 
@@ -97,6 +97,8 @@ def GAN_training(hparams):#separate function for doing generative training
                 # compute gradients and run optimizer step
                 D_total_loss.backward()
                 D_optimizer.step()
+                for p in Discriminator1.parameters():#clipping the critic's weights
+                    p.data.clamp_(-0.01, 0.01)
                 D_out_acc[epoch,disc_epoch_idx,index] = (binary_acc(D_real.cpu(), True) + binary_acc(D_fake.cpu(), False))
                 D_loss_list[epoch,disc_epoch_idx,index] =  D_total_loss.cpu().detach().numpy()
                 D_loss_real[epoch,disc_epoch_idx,index] =  D_real_loss.cpu().detach().numpy()
@@ -156,7 +158,7 @@ def GAN_training(hparams):#separate function for doing generative training
         # Scheduler
         G_scheduler.step()
     # Save models
-    local_dir = hparams.global_dir + '/learning_rate_{:.4f}_epochs_{}_lambda_{}_gen_epoch_{}_disc_epoch_{}_Lambda_b{}'.format(hparams.learn_rate,hparams.epochs,hparams.Lambda,hparams.gen_epoch,hparams.disc_epoch,Lambda_b) 
+    local_dir = hparams.global_dir + '/gen_lr_{:.5f}_disc_lr_{:.5f}_epochs_{}_lambda_{}_gen_epoch_{}_disc_epoch_{}_Lambda_b{}'.format(hparams.learn_rate,hparams.disc_learn_rate,hparams.epochs,hparams.Lambda,hparams.gen_epoch,hparams.disc_epoch,Lambda_b) 
     if not os.path.isdir(local_dir):
         os.makedirs(local_dir)
     tosave_weights = local_dir +'/saved_weights.pt' 
@@ -266,7 +268,7 @@ def UNET_training(hparams):
                 loss_val = main_loss(generated_image, target_img)
             val_loss[epoch,index] = loss_val.cpu().detach().numpy()
     # Save models
-    local_dir = hparams.global_dir + '/learning_rate_{:.4f}_epochs_{}_lambda_{}_loss_type{}_Lambda_b{}'.format(hparams.learn_rate,hparams.epochs,hparams.Lambda,hparams.loss_type,Lambda_b) 
+    local_dir = hparams.global_dir + '/learning_rate_{:.5f}_epochs_{}_lambda_{}_loss_type{}_Lambda_b{}'.format(hparams.learn_rate,hparams.epochs,hparams.Lambda,hparams.loss_type,Lambda_b) 
     if not os.path.isdir(local_dir):
         os.makedirs(local_dir)
     tosave_weights = local_dir +'/saved_weights.pt' 

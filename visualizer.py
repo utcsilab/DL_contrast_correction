@@ -13,7 +13,7 @@ from losses import SSIMLoss, generator_loss, discriminator_loss, generator_loss_
 import torchvision.models as models
 vgg16 = models.vgg16()
 
-os.chdir('/home/sidharth/sid_notebooks/UNET_GAN2_training/train_results/model_GAN_input_data_text_mdme_data_loss_type_L1_mode_Full_img/learning_rate_0.0001_epochs_10_lambda_1_gen_epoch_10_disc_epoch_10_Lambda_b1')
+os.chdir('/home/sidharth/sid_notebooks/UNET_GAN2_training/train_results/model_GAN_data_repo_text_files_loss_L1_mode_Full_img/gen_lr_0.00010_disc_lr_0.00001_epochs_50_lambda_1.0_gen_epoch_1_disc_epoch_5_Lambda_b1.0')
 
 # os.chdir('/home/sidharth/sid_notebooks/UNET_GAN2_training/train_results/model_UNET_input_data_mdme_data_loss_type_L1_mode_Full_img/learning_rate_0.0001_epochs_150_lambda_1_loss_typeL1_Lambda_b100.0')
 saved_results = torch.load('saved_weights.pt',map_location='cpu')
@@ -24,7 +24,7 @@ UNet1.load_state_dict(saved_results['model_state_dict'])
 UNet1.eval()
 val_loader = hparams.val_loader
 # local_dir = hparams.global_dir + '/Test_images_learning_rate_{:.4f}_epochs_{}_lambda_{}'.format(hparams.lr,hparams.epochs,hparams.Lambda) 
-local_dir = hparams.global_dir + '/Test_images_learning_rate_{:.4f}_epochs_{}_lambda_{}_{}_gen_epochs_{}_disc_epoch_{}_Lambda_b{}'.format(hparams.lr,hparams.epochs,hparams.Lambda,hparams.model_arc,hparams.gen_epoch,hparams.disc_epoch,hparams.Lambda_b) 
+local_dir = hparams.global_dir + '/Test_images_gen_lr_{:.5f}_disc_lr_{:.5f}_epochs_{}_lambda_{}_{}_gen_epochs_{}_disc_epoch_{}_Lambda_b{}'.format(hparams.learn_rate,hparams.disc_learn_rate,hparams.epochs,hparams.Lambda,hparams.model_arc,hparams.gen_epoch,hparams.disc_epoch,hparams.Lambda_b) 
 
 print(local_dir)
 if not os.path.exists(local_dir):
@@ -36,7 +36,7 @@ if not os.path.exists(local_dir):
 # Discriminator1(input_img[None,...].to(hparams.device)) 
 
 
-hparams.data_file   =  'repo_text_files/test_samples.txt'#'subject13_data'
+hparams.data_file   =  'repo_text_files/test_samples.txt'
 data_dir = hparams.root_dir + hparams.data_file
 dataset = Exp_contrast_Dataset(data_dir,transform=transforms.Compose([
     Normalize_by_max(),Toabsolute()]))
@@ -46,6 +46,8 @@ print('Test data length:- ',test_loader.__len__())
 SSIM       = SSIMLoss()
 NRMSE      = NRMSELoss()
 for index, (input_img, target_img, params) in enumerate(test_loader):
+    TE, TR, TI = int(params[0][0]),int(params[0][1]),int(params[0][2])
+    file_identifier = str(params[1])[31:50]
     model_out = UNet1(input_img[None,...].to(hparams.device)) 
     NN_output = model_out.cpu().detach().numpy().squeeze()
     actual_out = target_img.cpu().detach().numpy().squeeze()
@@ -70,7 +72,7 @@ for index, (input_img, target_img, params) in enumerate(test_loader):
     SSIM_in   = SSIM(torch.from_numpy(actual_out[None,None,:,:]),torch.from_numpy(actual_in[None,None,:,:]) , torch.tensor([1]))
     SSIM_gan  = SSIM(torch.from_numpy(actual_out[None,None,:,:]),torch.from_numpy(NN_output[None,None,:,:]), torch.tensor([1]))
     plt.figure(figsize=(16,6))
-    plt.suptitle('Parameters of contrast:- (TE = {}, TR = {}, TI = {}) {}'.format(*params[0],params[1]), fontsize=16)
+    plt.suptitle('Parameters of contrast:- (TE = {}, TR = {}, TI = {}) {}'.format(TE, TR, TI,file_identifier), fontsize=16)
     plt.subplot(1,4,1)
     plt.imshow(np.abs(actual_in),cmap='gray',vmax=0.5,vmin=0)
     plt.title('Input, NRMSE = {:.4f}, SSIM = {:.4f}'.format(nrmse_in,SSIM_in))
@@ -93,9 +95,9 @@ for index, (input_img, target_img, params) in enumerate(test_loader):
     plt.colorbar()
         # Save
     plt.tight_layout()
-    plt.savefig(local_dir + '/test_image_TE = {}, TR = {}, TI = {}_{}.png'.format(int(params[0][0]),int(params[0][1]),int(params[0][2]),str(params[1])[31:50]), dpi=100)
+    plt.savefig(local_dir + '/test_image_TE = {}, TR = {}, TI = {}_{}.png'.format(TE, TR, TI,file_identifier), dpi=100)
     plt.close()
-    if(index>50):
+    if(index>150):
         exit()
 
 
