@@ -18,7 +18,7 @@ os.chdir('/home/sidharth/sid_notebooks/UNET_GAN2_training/train_results/model_GA
 # os.chdir('/home/sidharth/sid_notebooks/UNET_GAN2_training/train_results/model_UNET_input_data_mdme_data_loss_type_L1_mode_Full_img/learning_rate_0.0001_epochs_150_lambda_1_loss_typeL1_Lambda_b100.0')
 saved_results = torch.load('saved_weights.pt',map_location='cpu')
 hparams   =  saved_results['hparams']
-hparams.device = 'cpu' #all gpus are clogged
+# hparams.device = 'cpu' #all gpus are clogged
 UNet1 = Unet(in_chans = hparams.n_channels, out_chans=hparams.n_channels,chans=hparams.filter).to(hparams.device)
 UNet1.load_state_dict(saved_results['model_state_dict'])
 UNet1.eval()
@@ -97,8 +97,6 @@ for index, (input_img, target_img, params) in enumerate(test_loader):
     plt.tight_layout()
     plt.savefig(local_dir + '/test_image_TE = {}, TR = {}, TI = {}_{}.png'.format(TE, TR, TI,file_identifier), dpi=100)
     plt.close()
-    if(index>150):
-        exit()
 
 
 exit()
@@ -141,4 +139,3 @@ for index, (input_img, target_img, params) in enumerate(hparams.train_loader):
 
 D_loss_real   =  saved_results['D_loss_real']
 D_loss_fake   =  saved_results['D_loss_fake']
-
