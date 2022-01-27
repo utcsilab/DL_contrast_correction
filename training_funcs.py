@@ -136,7 +136,7 @@ def GAN_training(hparams):#separate function for doing generative training
                     loss_val = main_loss(generated_image, target_img, torch.tensor([1]).to(device)) + Lambda_b*VGG_loss(generated_image, target_img)
                 else:
                     loss_val = main_loss(generated_image, target_img) + Lambda_b*VGG_loss(generated_image, target_img)
-                G_loss = gen_loss + (Lambda* loss_val)  
+                G_loss = Lambda*gen_loss + loss_val  
                 # compute gradients and run optimizer step
                 G_optimizer.zero_grad()
                 G_loss.backward()

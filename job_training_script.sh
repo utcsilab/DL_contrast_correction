@@ -10,7 +10,7 @@
 # done
 # echo "All done"
 
-export epochs="10"
+export epochs="200"
 export random_seed="80"
 export learn_rate='0.0001'
 export disc_learn_rate='0.00001'
@@ -20,16 +20,16 @@ export patch_size=72
 export patch_stride=72
 export loss_type='L1'
 export Lambda=1
-export Lambda_b=1
+export Lambda_b=10
 export data_file='repo_text_files'
-export disc_epoch=5
-export gen_epoch=1
+export disc_epoch=10
+export gen_epoch=10
 export filter=64
 export batch_size=16
 export step_size=10
 export decay_gamma=0.5
-export n_channels=1
+export n_channels=2
 export root_dir='/home/sidharth/sid_notebooks/UNET_GAN2_training/'
-export GPU_idx=2
+export GPU_idx=0
 
 python train0.py -e ${epochs} -lr ${learn_rate} -dlr ${disc_learn_rate} -df ${data_file} -ma ${model_arc} -l $loss_type -mm ${model_mode} -G ${GPU_idx} -lb ${Lambda} -lb_b ${Lambda_b} -de ${disc_epoch} -ge ${gen_epoch} -f ${filter} -b ${batch_size}
