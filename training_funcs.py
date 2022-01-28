@@ -42,7 +42,7 @@ def GAN_training(hparams):#separate function for doing generative training
     train_data_len = train_loader.__len__() # length of training_generator
     # Criterions or losses to choose from
     if (hparams.loss_type=='SSIM'):
-        main_loss       = SSIMLoss().to(device)
+        main_loss  = SSIMLoss().to(device)
     elif (hparams.loss_type=='L1'):
         main_loss  = nn.L1Loss()
     elif (hparams.loss_type=='L2'):
