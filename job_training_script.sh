@@ -20,7 +20,7 @@ export patch_size=72
 export patch_stride=72
 export loss_type='L1'
 export Lambda=1
-export Lambda_b=0.5
+export Lambda_b=0.1
 export data_file='repo_text_files'
 export disc_epoch=20
 export gen_epoch=10
@@ -30,6 +30,8 @@ export step_size=10
 export decay_gamma=0.5
 export n_channels=2
 export root_dir='/home/sidharth/sid_notebooks/UNET_GAN2_training/'
-export GPU_idx=4
+export GPU_idx=3
+
+# source params.sh 
 
 python train0.py -e ${epochs} -lr ${learn_rate} -dlr ${disc_learn_rate} -df ${data_file} -ma ${model_arc} -l ${loss_type} -mm ${model_mode} -G ${GPU_idx} -lb ${Lambda} -lb_b ${Lambda_b} -de ${disc_epoch} -ge ${gen_epoch} -f ${filter} -b ${batch_size}
