@@ -18,4 +18,4 @@ export step_size=10
 export decay_gamma=0.5
 export n_channels=2
 export root_dir='/home/sidharth/sid_notebooks/UNET_GAN2_training/'
-export GPU_idx=4
+export GPU_idx=3
