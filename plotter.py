@@ -142,7 +142,7 @@ def test_img_plotter(hparams, UNet1, local_dir):
             file_identifier = str(params[1][0])[31:50]
 
 
-        model_out = UNet1(input_img[:,None,...].to(hparams.device)) 
+        model_out = UNet1(input_img.to(hparams.device)) 
         NN_output = model_out[0,...].cpu().detach().numpy().squeeze()
         actual_out = target_img[0,...].cpu().detach().numpy().squeeze()
         actual_in = input_img[0,...].cpu().detach().numpy().squeeze()
@@ -150,7 +150,7 @@ def test_img_plotter(hparams, UNet1, local_dir):
         plt.figure(figsize=(16,6))
         plt.suptitle('Parameters of contrast:- (TE = {}, TR = {}, TI = {}) {}'.format(TE, TR, TI, file_identifier), fontsize=16)
         plt.subplot(1,4,1)
-        plt.imshow(np.abs(actual_in),cmap='gray',vmax=0.5,vmin=0)
+        plt.imshow(np.abs(actual_in[0,:,:].squeeze()),cmap='gray',vmax=0.5,vmin=0)
         plt.title('Input')
         plt.colorbar()
         plt.axis('off')
@@ -184,7 +184,7 @@ def img_plotter(hparams, UNet1,val_loader,train_loader,local_dir):
             TE, TR, TI = int(params[0][0][0]),int(params[0][1][0]),int(params[0][2][0])
             file_identifier = str(params[1][0])[31:50]
 
-        model_out = UNet1(input_img[:,None,...].to(hparams.device)) 
+        model_out = UNet1(input_img.to(hparams.device)) 
         NN_output = model_out[0,...].cpu().detach().numpy().squeeze()
         actual_out = target_img[0,...].cpu().detach().numpy().squeeze()
         actual_in = input_img[0,...].cpu().detach().numpy().squeeze()
@@ -192,7 +192,7 @@ def img_plotter(hparams, UNet1,val_loader,train_loader,local_dir):
         plt.figure(figsize=(16,6))
         plt.suptitle('Parameters of contrast:- (TE = {}, TR = {}, TI = {}) {}'.format(TE, TR, TI, file_identifier), fontsize=16)
         plt.subplot(1,4,1)
-        plt.imshow(np.abs(actual_in),cmap='gray',vmax=0.5,vmin=0)
+        plt.imshow(np.abs(actual_in[0,:,:].squeeze()),cmap='gray',vmax=0.5,vmin=0)
         plt.title('Input')
         plt.colorbar()
         plt.axis('off')
@@ -225,7 +225,7 @@ def img_plotter(hparams, UNet1,val_loader,train_loader,local_dir):
             TE, TR, TI = int(params[0][0][0]),int(params[0][1][0]),int(params[0][2][0])
             file_identifier = str(params[1][0])[31:50]
 
-        model_out = UNet1(input_img[:,None,...].to(hparams.device)) 
+        model_out = UNet1(input_img.to(hparams.device)) 
         NN_output = model_out[0,...].cpu().detach().numpy().squeeze()
         actual_out = target_img[0,...].cpu().detach().numpy().squeeze()
         actual_in = input_img[0,...].cpu().detach().numpy().squeeze()
@@ -233,7 +233,7 @@ def img_plotter(hparams, UNet1,val_loader,train_loader,local_dir):
         plt.figure(figsize=(16,6))
         plt.suptitle('Parameters of contrast:- (TE = {}, TR = {}, TI = {}) {}'.format(TE, TR, TI, file_identifier), fontsize=16)
         plt.subplot(1,4,1)
-        plt.imshow(np.abs(actual_in),cmap='gray',vmax=0.5,vmin=0)
+        plt.imshow(np.abs(actual_in[0,:,:].squeeze()),cmap='gray',vmax=0.5,vmin=0)
         plt.title('Input')
         plt.colorbar()
         plt.axis('off')

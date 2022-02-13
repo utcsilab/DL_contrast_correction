@@ -72,11 +72,13 @@ def GAN_training(hparams):#separate function for doing generative training
                     patches_in,  patches_out  = patches_in.permute(3,0,1,2), patches_out.permute(3,0,1,2)
                     input_img, target_img = patches_in.to(device), patches_out.to(device) # Transfer to GPU
                 else:
-                    input_img, target_img = input_img[None,...], target_img[None,...]
-                # this works for both
-                input_img, target_img = input_img.to(device), target_img.to(device) # Transfer to GPU
-                input_img, target_img = input_img.permute(1,0,2,3), target_img.permute(1,0,2,3)# to make it work with batch size > 1
-
+                    pass
+                    # commenting out the next line to work with TI value pass
+                    # input_img, target_img = input_img[None,...], target_img[None,...]
+                    target_img = target_img[None,...]
+                # Transfer to GPU
+                input_img, target_img = input_img.to(device), target_img.to(device)
+                target_img = target_img.permute(1,0,2,3)# to make it work with batch size > 1
                 generated_image = UNet1(input_img)
                 G = Discriminator1(generated_image)
 
@@ -117,11 +119,13 @@ def GAN_training(hparams):#separate function for doing generative training
                     patches_in,  patches_out  = patches_in.permute(3,0,1,2), patches_out.permute(3,0,1,2)
                     input_img, target_img = patches_in.to(device), patches_out.to(device) # Transfer to GPU
                 else:
-                    input_img, target_img = input_img[None,...], target_img[None,...]
-                # this works for both
-                input_img, target_img = input_img.to(device), target_img.to(device) # Transfer to GPU
-                # generator forward pass
-                input_img, target_img = input_img.permute(1,0,2,3), target_img.permute(1,0,2,3)# to make it work with batch size > 1
+                    pass
+                    # commenting out the next line to work with TI value pass
+                    # input_img, target_img = input_img[None,...], target_img[None,...]
+                    target_img = target_img[None,...]
+                # Transfer to GPU
+                input_img, target_img = input_img.to(device), target_img.to(device)
+                target_img = target_img.permute(1,0,2,3)# to make it work with batch size > 1
                 generated_image = UNet1(input_img)
                 G = Discriminator1(generated_image)
 
@@ -225,10 +229,13 @@ def UNET_training(hparams):
                 patches_in,  patches_out  = patches_in.permute(3,0,1,2), patches_out.permute(3,0,1,2)
                 input_img, target_img = patches_in.to(device), patches_out.to(device) # Transfer to GPU
             else:
-                input_img, target_img = input_img[None,...], target_img[None,...]
+                pass
+                # commenting out the next line to work with TI value pass
+                # input_img, target_img = input_img[None,...], target_img[None,...]
+                target_img = target_img[None,...]
             # Transfer to GPU
             input_img, target_img = input_img.to(device), target_img.to(device)
-            input_img, target_img = input_img.permute(1,0,2,3), target_img.permute(1,0,2,3)# to make it work with batch size > 1
+            target_img = target_img.permute(1,0,2,3)# to make it work with batch size > 1
 
             generated_image = UNet1(input_img)
 
@@ -253,11 +260,13 @@ def UNET_training(hparams):
                 patches_in,  patches_out  = patches_in.permute(3,0,1,2), patches_out.permute(3,0,1,2)
                 input_img, target_img = patches_in.to(device), patches_out.to(device) # Transfer to GPU
             else:
-                input_img, target_img = input_img[None,...], target_img[None,...]
+                pass
+                # commenting out the next line to work with TI value pass
+                # input_img, target_img = input_img[None,...], target_img[None,...]
+                target_img = target_img[None,...]
             # Transfer to GPU
             input_img, target_img = input_img.to(device), target_img.to(device)
-
-            input_img, target_img = input_img.permute(1,0,2,3), target_img.permute(1,0,2,3)# to make it work with batch size > 1
+            target_img = target_img.permute(1,0,2,3)# to make it work with batch size > 1
 
             generated_image = UNet1(input_img)
 
