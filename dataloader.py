@@ -71,10 +71,11 @@ class Exp_contrast_Dataset(Dataset):
         y = self.y_array[idx]
         params = self.params_array[idx]
         ID = self.datafiles[idx]
-            
         if self.transform is not None:
             X = self.transform(X)
             y = self.transform(y)
+        TI_array = np.ones((X.shape))*params[2]
+        X = np.stack((X,TI_array))
         return X.astype(np.float32), y.astype(np.float32), [params,ID]
 
 

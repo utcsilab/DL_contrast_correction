@@ -33,7 +33,7 @@ parser.add_argument('-mm','--model_mode', type=str, default='Full_img', metavar=
 parser.add_argument('-ps','--patch_size',type=int,default=72,metavar='',help='size of patches')
 parser.add_argument('-pst','--patch_stride',type=int,default=72,metavar='',help='stride of patches')
 parser.add_argument('-l','--loss_type', type=str, default='L1', metavar='',choices=['SSIM', 'L1', 'L2'], help = 'Choose the loss type for the main network')
-parser.add_argument('-G','--GPU_idx',  type =int, default=4, metavar='',  help='GPU to Use')
+parser.add_argument('-G','--GPU_idx',  type =int, default=1, metavar='',  help='GPU to Use')
 parser.add_argument('-lb','--Lambda', type=float, default=1,metavar='', help = 'variable to weight loss fn w.r.t adverserial loss')
 parser.add_argument('-lb_b','--Lambda_b', type=float, default=1, metavar='', help = 'variable to weight loss fn w.r.t perceptual loss')
 parser.add_argument('-df','--data_file', type=str, default='repo_text_files_10', metavar='', help = 'Data on which the model need to be trained')
@@ -87,7 +87,7 @@ args.val_loader   = val_loader
 print('Training data length:- ',train_dataset.__len__())
 print('Validation data length:- ',val_dataset.__len__())
 
-UNet1 = Unet(in_chans = args.n_channels, out_chans=args.n_channels,chans=args.filter).to(args.device)
+UNet1 = Unet(in_chans = 2*args.n_channels, out_chans=args.n_channels,chans=args.filter).to(args.device)
 UNet1.train()
 
 # print('Number of parameters in the generator:- ', np.sum([np.prod(p.shape) for p in UNet1.parameters() if p.requires_grad]))
