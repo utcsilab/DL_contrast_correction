@@ -74,7 +74,9 @@ class Exp_contrast_Dataset(Dataset):
         if self.transform is not None:
             X = self.transform(X)
             y = self.transform(y)
-        TI_array = np.ones((X.shape))*params[2]
+        #normalizing with a TI_max value
+        TI_max = 3000
+        TI_array = np.ones((X.shape))*params[2]/TI_max
         X = np.stack((X,TI_array))
         return X.astype(np.float32), y.astype(np.float32), [params,ID]
 
