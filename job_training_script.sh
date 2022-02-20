@@ -20,7 +20,7 @@ export patch_size=72
 export patch_stride=72
 export loss_type='L1'
 export Lambda=1
-export Lambda_b=0.5
+export Lambda_b=0.1
 export data_file='repo_text_files'
 export disc_epoch=20
 export gen_epoch=10
@@ -30,7 +30,7 @@ export step_size=10
 export decay_gamma=0.5
 export n_channels=2
 export root_dir='/home/sidharth/sid_notebooks/UNET_GAN2_training/'
-export GPU_idx=2
+export GPU_idx=3
 
 # source params.sh 
 
