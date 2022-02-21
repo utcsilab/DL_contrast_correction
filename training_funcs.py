@@ -161,6 +161,10 @@ def GAN_training(hparams):#separate function for doing generative training
             # Generator training ends
         # Scheduler
         G_scheduler.step()
+        # saving the validation set results, now 
+    
+    
+    
     # Save models
     local_dir = hparams.global_dir + '/gen_lr_{:.5f}_disc_lr_{:.5f}_epochs_{}_lambda_{}_gen_epoch_{}_disc_epoch_{}_Lambda_b{}'.format(hparams.learn_rate,hparams.disc_learn_rate,hparams.epochs,hparams.Lambda,hparams.gen_epoch,hparams.disc_epoch,Lambda_b) 
     if not os.path.isdir(local_dir):
