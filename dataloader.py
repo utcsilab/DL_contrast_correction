@@ -75,7 +75,7 @@ class Exp_contrast_Dataset(Dataset):
             X = self.transform(X)
             y = self.transform(y)
         #normalizing with a TI_max value
-        TI_max = 3000
+        TI_max = 3000 #choosen heuristically, none of the TI values are larger than 2500ms
         TI_array = np.ones((X.shape))*params[2]/TI_max
         X = np.stack((X,TI_array))
         return X.astype(np.float32), y.astype(np.float32), [params,ID]
