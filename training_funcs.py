@@ -173,11 +173,10 @@ def GAN_training(hparams):#separate function for doing generative training
             input_img, target_img = input_img.to(device), target_img.to(device)
             target_img = target_img.permute(1,0,2,3)# to make it work with batch size > 1
             generated_image = UNet1(input_img)
-            val_ssim_loss[epoch,index] = SSIM(generated_image, target_img, torch.tensor([1]).to(device))
+            # SSIM def is defined in a way so that the network tries to minimize it
+            val_ssim_loss[epoch,index] = 1 - SSIM(generated_image, target_img, torch.tensor([1]).to(device))
             val_nrmse_loss[epoch,index] = NRMSE(generated_image, target_img)
             
-    
-    
     # Save models
     local_dir = hparams.global_dir + '/gen_lr_{:.5f}_disc_lr_{:.5f}_epochs_{}_lambda_{}_gen_epoch_{}_disc_epoch_{}_Lambda_b{}'.format(hparams.learn_rate,hparams.disc_learn_rate,hparams.epochs,hparams.Lambda,hparams.gen_epoch,hparams.disc_epoch,Lambda_b) 
     if not os.path.isdir(local_dir):
@@ -197,6 +196,8 @@ def GAN_training(hparams):#separate function for doing generative training
         'D_out_real':D_out_real,
         'D_out_fake':D_out_fake,
         'D_out_acc':D_out_acc,
+        'val_nrmse_loss':val_nrmse_loss,
+        'val_ssim_loss':val_ssim_loss,
         'hparams': hparams}, tosave_weights)
     
     sourceFile = open(local_dir +'/params_used.txt', 'w')

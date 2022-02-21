@@ -40,7 +40,7 @@ parser.add_argument('-df','--data_file', type=str, default='repo_text_files_10',
 parser.add_argument('-de','--disc_epoch', type=int, default=5, metavar='', help = 'epochs for training the disc separately') 
 parser.add_argument('-ge','--gen_epoch', type=int, default=5, metavar='', help = 'epochs for training the gen separately')
 parser.add_argument('-f','--filter',type=int, default=64, metavar='', help='num of filters for the UNET')
-parser.add_argument('-b','--batch_size',type=int,default=10,metavar='',help='batch size for training')
+parser.add_argument('-b','--batch_size',type=int,default=5,metavar='',help='batch size for training')
 parser.add_argument('-ss','--step_size',type=int,default=10,metavar='',help='Number of epochs to decay with gamma')
 parser.add_argument('-dg','--decay_gamma',type=float, default=0.5, metavar='', help = 'gamma decay rate')
 parser.add_argument('-nc','--n_channels',type=int,default=1,metavar='',help='number of channels for UNET')

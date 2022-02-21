@@ -21,11 +21,13 @@ def plotter_GAN(hparams,tosave_weights,local_dir,UNet1,train_loader,val_loader):
     D_loss      = saved_results['D_loss_list']
     D_out_fake = saved_results['D_out_fake']
     D_out_real = saved_results['D_out_real']
+    val_nrmse_loss = saved_results['val_nrmse_loss']
+    val_ssim_loss  = saved_results['val_ssim_loss']
     Lambda      = hparams.Lambda
-    fig, ax1 = plt.subplots(figsize=(8,20), nrows=4, ncols=1)
+    fig, ax1 = plt.subplots(figsize=(8,20), nrows=5, ncols=1)
     ax2 = ax1[0].twinx()
-    ax1[0].plot(np.mean(G_loss_l1,axis=1), 'g-')
-    ax2.plot(np.mean(G_loss_adv,axis=1), 'b-')
+    ax1[0].plot(np.mean(G_loss_l1,axis=(1,2)), 'g-')
+    ax2.plot(np.mean(G_loss_adv,axis=(1,2)), 'b-')
 #     ax1.set_ylim([0, Lambda*.50])
     ax1[0].set_xlabel('Epoch index')
     ax1[0].set_ylabel('{} loss'.format(hparams.loss_type), color='g')
@@ -35,8 +37,8 @@ def plotter_GAN(hparams,tosave_weights,local_dir,UNet1,train_loader,val_loader):
     plt.title('Generator ({} and adv), $\lambda$ = {}'.format(hparams.loss_type ,Lambda))
 
     ax2 = ax1[1].twinx()
-    ax1[1].plot(np.sum(D_loss_real,axis=1)/np.count_nonzero(D_loss_real[:,:], axis=1), 'g-')
-    ax2.plot(np.sum(D_loss_fake,axis=1)/np.count_nonzero(D_loss_fake[:,:], axis=1), 'b-')
+    ax1[1].plot(np.mean(D_loss_real,axis=(1,2)), 'g-')
+    ax2.plot(np.mean(D_loss_fake,axis=(1,2)), 'b-')
 
     ax1[1].set_xlabel('Epoch index')
     ax1[1].set_ylabel('Disc real loss', color='g')
@@ -46,8 +48,8 @@ def plotter_GAN(hparams,tosave_weights,local_dir,UNet1,train_loader,val_loader):
     plt.title('Disc Loss (real and fake), $\lambda$ = {}'.format(Lambda))
 
     ax2 = ax1[2].twinx()
-    ax1[2].plot(np.sum(D_loss,axis=1)/np.count_nonzero(D_loss[:,:], axis=1), 'g-')
-    ax2.plot(np.mean(G_loss,axis=1), 'b-')
+    ax1[2].plot(np.mean(D_loss,axis=(1,2)), 'g-')
+    ax2.plot(np.mean(G_loss,axis=(1,2)), 'b-')
 #     ax2.xlim([25, 50])
 #     ax2.set_ylim([0, 5])
 
@@ -60,8 +62,8 @@ def plotter_GAN(hparams,tosave_weights,local_dir,UNet1,train_loader,val_loader):
 
 
     ax2 = ax1[3].twinx()
-    ax1[3].plot(np.sum(D_out_real,axis=1)/np.count_nonzero(D_out_real[:,:], axis=1), 'g-')
-    ax2.plot(np.mean(D_out_fake,axis=1), 'b-')
+    ax1[3].plot(np.mean(D_out_real,axis=(1,2)), 'g-')
+    ax2.plot(np.mean(D_out_fake,axis=(1,2)), 'b-')
 
     ax1[3].set_xlabel('Epoch index')
     ax1[3].set_ylabel('Disc out real', color='g')
@@ -69,6 +71,17 @@ def plotter_GAN(hparams,tosave_weights,local_dir,UNet1,train_loader,val_loader):
     ax2.set_ylabel('Disc out fake', color='b')
     ax2.tick_params(axis='y', colors='b')
     plt.title('Disc out, $\lambda$ = {}'.format(Lambda))
+
+    ax2 = ax1[4].twinx()
+    ax1[4].plot(np.mean(val_nrmse_loss,axis=1), 'g-')
+    ax2.plot(np.mean(val_ssim_loss,axis=1), 'b-')
+
+    ax1[4].set_xlabel('Epoch index')
+    ax1[4].set_ylabel('NRMSE', color='g')
+    ax1[4].tick_params(axis='y', colors='g')
+    ax2.set_ylabel('SSIM', color='b')
+    ax2.tick_params(axis='y', colors='b')
+    plt.title('Avg. NRMSE and SSIM, $\lambda$ = {}'.format(Lambda))
 
     # Save
     plt.tight_layout()
