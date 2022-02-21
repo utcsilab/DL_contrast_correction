@@ -40,6 +40,7 @@ def GAN_training(hparams):#separate function for doing generative training
     D_scheduler = StepLR(D_optimizer, hparams.step_size, hparams.decay_gamma)
     # initialize arrays for storing losses
     train_data_len = train_loader.__len__() # length of training_generator
+    val_data_len   = val_loader.__len__()   # length of val_generator 
     # Criterions or losses to choose from
     if (hparams.loss_type=='SSIM'):
         main_loss  = SSIMLoss().to(device)
@@ -59,6 +60,10 @@ def GAN_training(hparams):#separate function for doing generative training
     G_loss_list, D_loss_list = np.zeros((epochs,gen_epoch,train_data_len)), np.zeros((epochs,disc_epoch,train_data_len))
     D_out_acc                = np.zeros((epochs,disc_epoch,train_data_len))
     accuracy_results         = np.zeros((epochs,disc_epoch))
+    val_nrmse_loss = np.zeros((epochs,val_data_len))
+    val_ssim_loss  = np.zeros((epochs,val_data_len))
+    SSIM       = SSIMLoss().to(device)
+    NRMSE      = NRMSELoss()
     if (hparams.model_mode=='Patch'):
         unfold = torch.nn.Unfold(kernel_size=patch_size, stride=patch_stride) # Unfold kernel
     # Loop over epochs
@@ -162,7 +167,15 @@ def GAN_training(hparams):#separate function for doing generative training
         # Scheduler
         G_scheduler.step()
         # saving the validation set results, now 
-    
+        for index, (input_img, target_img, params) in enumerate(val_loader):
+            target_img = target_img[None,...]
+            # Transfer to GPU
+            input_img, target_img = input_img.to(device), target_img.to(device)
+            target_img = target_img.permute(1,0,2,3)# to make it work with batch size > 1
+            generated_image = UNet1(input_img)
+            val_ssim_loss[epoch,index] = SSIM(generated_image, target_img, torch.tensor([1]).to(device))
+            val_nrmse_loss[epoch,index] = NRMSE(generated_image, target_img)
+            
     
     
     # Save models

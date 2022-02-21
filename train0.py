@@ -24,7 +24,7 @@ import training_funcs
 import argparse
 
 parser = argparse.ArgumentParser(description='Reading args for running the deep network training')
-parser.add_argument('-e','--epochs', type=int, default=2, metavar='', help = 'number of epochs to train the network') #positional argument
+parser.add_argument('-e','--epochs', type=int, default=4, metavar='', help = 'number of epochs to train the network') #positional argument
 parser.add_argument('-rs','--random_seed', type=int, default=80, metavar='', help = 'Random reed for the PRNGs of the training') #optional argument
 parser.add_argument('-lr','--learn_rate', type=float, default=0.0001, metavar='', help = 'Learning rate for the Generator') #optional argument
 parser.add_argument('-dlr','--disc_learn_rate', type=float, default=0.00001, metavar='', help = 'Learning rate for the discriminator') #optional argument
@@ -37,8 +37,8 @@ parser.add_argument('-G','--GPU_idx',  type =int, default=1, metavar='',  help='
 parser.add_argument('-lb','--Lambda', type=float, default=1,metavar='', help = 'variable to weight loss fn w.r.t adverserial loss')
 parser.add_argument('-lb_b','--Lambda_b', type=float, default=1, metavar='', help = 'variable to weight loss fn w.r.t perceptual loss')
 parser.add_argument('-df','--data_file', type=str, default='repo_text_files_10', metavar='', help = 'Data on which the model need to be trained')
-parser.add_argument('-de','--disc_epoch', type=int, default=10, metavar='', help = 'epochs for training the disc separately') 
-parser.add_argument('-ge','--gen_epoch', type=int, default=10, metavar='', help = 'epochs for training the gen separately')
+parser.add_argument('-de','--disc_epoch', type=int, default=5, metavar='', help = 'epochs for training the disc separately') 
+parser.add_argument('-ge','--gen_epoch', type=int, default=5, metavar='', help = 'epochs for training the gen separately')
 parser.add_argument('-f','--filter',type=int, default=64, metavar='', help='num of filters for the UNET')
 parser.add_argument('-b','--batch_size',type=int,default=10,metavar='',help='batch size for training')
 parser.add_argument('-ss','--step_size',type=int,default=10,metavar='',help='Number of epochs to decay with gamma')
@@ -81,7 +81,7 @@ val_dataset = Exp_contrast_Dataset(val_data_dir,transform=transforms.Compose([
     Normalize_by_max(),Toabsolute()]))
 
 train_loader         = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
-val_loader           = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
+val_loader           = torch.utils.data.DataLoader(val_dataset, batch_size=1, shuffle=False)
 args.train_loader = train_loader
 args.val_loader   = val_loader
 print('Training data length:- ',train_dataset.__len__())
