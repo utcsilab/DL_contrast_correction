@@ -10,7 +10,7 @@
 # done
 # echo "All done"
 
-export epochs="10"
+export epochs="6"
 export random_seed="80"
 export learn_rate='0.0005'
 export disc_learn_rate='0.00001'
@@ -20,7 +20,7 @@ export patch_size=72
 export patch_stride=72
 export loss_type='L1'
 export Lambda=1
-export Lambda_b=0.5
+export Lambda_b=0.1
 export data_file='repo_text_files'
 export disc_epoch=20
 export gen_epoch=10

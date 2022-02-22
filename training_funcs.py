@@ -32,7 +32,9 @@ def GAN_training(hparams):#separate function for doing generative training
     val_loader   = hparams.val_loader   
     patch_size   = hparams.patch_size
     patch_stride = hparams.patch_stride
-
+    local_dir = hparams.global_dir + '/gen_lr_{:.5f}_disc_lr_{:.5f}_epochs_{}_lambda_{}_gen_epoch_{}_disc_epoch_{}_Lambda_b{}'.format(hparams.learn_rate,hparams.disc_learn_rate,hparams.epochs,hparams.Lambda,hparams.gen_epoch,hparams.disc_epoch,Lambda_b) 
+    if not os.path.isdir(local_dir):
+        os.makedirs(local_dir)
     # choosing betas after talking with Ali, this are required for the case of GANs
     G_optimizer = optim.Adam(UNet1.parameters(), lr=lr, betas=(0.5, 0.999))
     G_scheduler = StepLR(G_optimizer, hparams.step_size, gamma=hparams.decay_gamma)
@@ -176,11 +178,9 @@ def GAN_training(hparams):#separate function for doing generative training
             # SSIM def is defined in a way so that the network tries to minimize it
             val_ssim_loss[epoch,index] = 1 - SSIM(generated_image, target_img, torch.tensor([1]).to(device))
             val_nrmse_loss[epoch,index] = NRMSE(generated_image, target_img)
-            
+        #saving trained model at each epoch
+        torch.save(UNet1.state_dict(), local_dir + '/model_epoch%d.pt' % epoch)
     # Save models
-    local_dir = hparams.global_dir + '/gen_lr_{:.5f}_disc_lr_{:.5f}_epochs_{}_lambda_{}_gen_epoch_{}_disc_epoch_{}_Lambda_b{}'.format(hparams.learn_rate,hparams.disc_learn_rate,hparams.epochs,hparams.Lambda,hparams.gen_epoch,hparams.disc_epoch,Lambda_b) 
-    if not os.path.isdir(local_dir):
-        os.makedirs(local_dir)
     tosave_weights = local_dir +'/saved_weights.pt' 
     torch.save({
         'epoch': epoch,
