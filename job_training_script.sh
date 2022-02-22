@@ -10,7 +10,7 @@
 # done
 # echo "All done"
 
-export epochs="6"
+export epochs="10"
 export random_seed="80"
 export learn_rate='0.0005'
 export disc_learn_rate='0.00001'
@@ -30,7 +30,7 @@ export step_size=10
 export decay_gamma=0.5
 export n_channels=2
 export root_dir='/home/sidharth/sid_notebooks/UNET_GAN2_training/'
-export GPU_idx=2
+export GPU_idx=1
 
 # source params.sh 
 
