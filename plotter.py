@@ -81,7 +81,7 @@ def plotter_GAN(hparams,tosave_weights,local_dir,UNet1,train_loader,val_loader):
     ax1[4].tick_params(axis='y', colors='g')
     ax2.set_ylabel('SSIM', color='b')
     ax2.tick_params(axis='y', colors='b')
-    plt.title('Avg. NRMSE and SSIM, $\lambda$ = {}'.format(Lambda))
+    plt.title('Avg. NRMSE and SSIM (Val), $\lambda$ = {}'.format(Lambda))
 
     # Save
     plt.tight_layout()
