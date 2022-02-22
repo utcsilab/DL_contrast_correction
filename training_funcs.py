@@ -81,11 +81,12 @@ def GAN_training(hparams):#separate function for doing generative training
                 else:
                     pass
                     # commenting out the next line to work with TI value pass
-                    # input_img, target_img = input_img[None,...], target_img[None,...]
-                    target_img = target_img[None,...]
+                    input_img, target_img = input_img[None,...], target_img[None,...]
+                    # target_img = target_img[None,...]
                 # Transfer to GPU
                 input_img, target_img = input_img.to(device), target_img.to(device)
-                target_img = target_img.permute(1,0,2,3)# to make it work with batch size > 1
+                # target_img = target_img.permute(1,0,2,3)# to make it work with batch size > 1 and without TI channel
+                input_img, target_img = input_img.permute(1,0,2,3), target_img.permute(1,0,2,3)# to make it work with batch size > 1
                 generated_image = UNet1(input_img)
                 G = Discriminator1(generated_image)
 
@@ -128,11 +129,12 @@ def GAN_training(hparams):#separate function for doing generative training
                 else:
                     pass
                     # commenting out the next line to work with TI value pass
-                    # input_img, target_img = input_img[None,...], target_img[None,...]
-                    target_img = target_img[None,...]
+                    input_img, target_img = input_img[None,...], target_img[None,...]
+                    # target_img = target_img[None,...]
                 # Transfer to GPU
                 input_img, target_img = input_img.to(device), target_img.to(device)
-                target_img = target_img.permute(1,0,2,3)# to make it work with batch size > 1
+                # target_img = target_img.permute(1,0,2,3)# to make it work with batch size > 1
+                input_img, target_img = input_img.permute(1,0,2,3), target_img.permute(1,0,2,3)# to make it work with batch size > 1
                 generated_image = UNet1(input_img)
                 G = Discriminator1(generated_image)
 
@@ -170,10 +172,12 @@ def GAN_training(hparams):#separate function for doing generative training
         G_scheduler.step()
         # saving the validation set results, now 
         for index, (input_img, target_img, params) in enumerate(val_loader):
-            target_img = target_img[None,...]
+            # target_img = target_img[None,...] #toggle back when you have TI channel
+            input_img, target_img = input_img[None,...], target_img[None,...]
             # Transfer to GPU
             input_img, target_img = input_img.to(device), target_img.to(device)
-            target_img = target_img.permute(1,0,2,3)# to make it work with batch size > 1
+            # target_img = target_img.permute(1,0,2,3)# to make it work with batch size > 1
+            input_img, target_img = input_img.permute(1,0,2,3), target_img.permute(1,0,2,3)# to make it work with batch size > 1
             generated_image = UNet1(input_img)
             # SSIM def is defined in a way so that the network tries to minimize it
             val_ssim_loss[epoch,index] = 1 - SSIM(generated_image, target_img, torch.tensor([1]).to(device))

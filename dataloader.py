@@ -81,6 +81,60 @@ class Exp_contrast_Dataset(Dataset):
         return X.astype(np.float32), y.astype(np.float32), [params,ID]
 
 
+# this class should only take the txt file location 
+# this is just taken from the above class just without the TI channel
+class Exp_contrast_Dataset_without_TI_channel(Dataset):
+    def __init__(self, root_dir, transform=None, target_transform=None):
+        """
+        Args:
+            root_dir (string): Directory location of the text file containing files that need to be in the dataloader.
+            transform (callable, optional): Optional transform to be applied
+                on a sample.
+        """
+        self.root_dir = root_dir
+        self.transform = transform
+        self.target_transform = target_transform
+        with open(root_dir, "r") as text_file:
+            files = text_file.readlines()
+            files = [file.rstrip() for file in files]
+        self.datafiles = files
+        # Initialize preloaded data arrays
+        self.X_array, self.y_array, self.params_array = [], [], []
+
+        # Walk through all files and preload data
+        os.chdir('/home/sidharth/sid_notebooks/')#change current working directory
+        for datafile in self.datafiles:
+            loaded_data = torch.load(datafile)
+            local_X = np.asarray(loaded_data['input'])
+            local_y = np.asarray(loaded_data['output'])
+            local_TE, local_TR, local_TI = \
+                    np.asarray(loaded_data['TE']), np.asarray(loaded_data['TR']), \
+                    np.asarray(loaded_data['TI'])
+            local_params = [local_TE, local_TR, local_TI]
+
+            # Place in preloaded arrays
+            self.X_array.append(local_X)
+            self.y_array.append(local_y)
+            self.params_array.append(local_params)
+
+    def __len__(self):
+        return len(self.datafiles)
+
+    def __getitem__(self, idx):
+        #first check if idx is list or integer
+        #if interger then current code works
+        # if list then for loop over the list and combine them into tensor and return 
+        X = self.X_array[idx]
+        y = self.y_array[idx]
+        params = self.params_array[idx]
+        ID = self.datafiles[idx]
+        if self.transform is not None:
+            X = self.transform(X)
+            y = self.transform(y)
+        #normalizing with a TI_max value
+        return X.astype(np.float32), y.astype(np.float32), [params,ID]
+
+
 class ToTensor(object):
     """Convert ndarrays in sample to Tensors."""
 

@@ -45,6 +45,7 @@ parser.add_argument('-ss','--step_size',type=int,default=10,metavar='',help='Num
 parser.add_argument('-dg','--decay_gamma',type=float, default=0.5, metavar='', help = 'gamma decay rate')
 parser.add_argument('-nc','--n_channels',type=int,default=1,metavar='',help='number of channels for UNET')
 parser.add_argument('-rd','--root_dir', type=str, default='/home/sidharth/sid_notebooks/UNET_GAN2_training/', metavar='', help = 'root directory where all the code is')
+parser.add_argument('-ti','--inversion_channel',  type =int, default=0, metavar='',  help='whether to use the inversion channel or not by default no')
 args = parser.parse_args()
 # saved params.sh and then give that as input to the 
 
@@ -66,6 +67,9 @@ args.device      = device
 # Global directory where results will be stored for the network training runs
 global_dir = args.root_dir  + 'train_results/model_%s_data_%s_loss_%s_mode_%s'\
     %(args.model_arc, args.data_file, args.loss_type, args.model_mode) 
+if args.inversion_channel ==0:
+    global_dir = args.root_dir  + 'train_results/model_%s_data_%s_loss_%s_mode_%s_inversion_channel%d'\
+    %(args.model_arc, args.data_file, args.loss_type, args.model_mode, args.inversion_channel) 
 if not os.path.exists(global_dir):
     os.makedirs(global_dir)
 args.global_dir = global_dir
@@ -80,6 +84,21 @@ val_data_dir = args.root_dir + args.data_file +  '/val_samples.txt'
 val_dataset = Exp_contrast_Dataset(val_data_dir,transform=transforms.Compose([
     Normalize_by_max(),Toabsolute()]))
 
+
+if args.inversion_channel ==0:
+    # Creating the dataloaders
+    # have the training text file location in the argparser
+    train_data_dir = args.root_dir + args.data_file + '/training_samples.txt'
+    train_dataset = Exp_contrast_Dataset_without_TI_channel(train_data_dir,transform=transforms.Compose([
+        Normalize_by_max(),Toabsolute()]))
+
+    val_data_dir = args.root_dir + args.data_file +  '/val_samples.txt'
+    val_dataset = Exp_contrast_Dataset_without_TI_channel(val_data_dir,transform=transforms.Compose([
+        Normalize_by_max(),Toabsolute()]))
+    # otherwise need to be out of this loop with twice channels 
+    UNet1 = Unet(in_chans = args.n_channels, out_chans=args.n_channels,chans=args.filter).to(args.device)
+    UNet1.train()
+
 train_loader         = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
 val_loader           = torch.utils.data.DataLoader(val_dataset, batch_size=1, shuffle=False)
 args.train_loader = train_loader
@@ -87,8 +106,7 @@ args.val_loader   = val_loader
 print('Training data length:- ',train_dataset.__len__())
 print('Validation data length:- ',val_dataset.__len__())
 
-UNet1 = Unet(in_chans = 2*args.n_channels, out_chans=args.n_channels,chans=args.filter).to(args.device)
-UNet1.train()
+
 
 # print('Number of parameters in the generator:- ', np.sum([np.prod(p.shape) for p in UNet1.parameters() if p.requires_grad]))
 # Discriminator1 = Discriminator(input_nc = hparams.n_channels).to(hparams.device)
