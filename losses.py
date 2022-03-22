@@ -128,3 +128,36 @@ class VGGPerceptualLoss(torch.nn.Module):
                 gram_y = act_y @ act_y.permute(0, 2, 1)
                 loss += torch.nn.functional.l1_loss(gram_x, gram_y)
         return loss
+
+'''
+Using trained UFLoss model to output UFLoss to be used in training to preserve perceptual factors
+'''
+import ufloss_files.resnet as resnet
+from ufloss_files.model import Model
+import sigpy as sp
+class UFLoss(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.model_ufloss = Model(resnet.resnet18_m, feature_dim=128, data_length=34440)
+        loss_uflossdir = '/home/sidharth/sid_notebooks/UFLoss/train_alma_UFLoss_feature_128_features_date_20220321_temperature_1_lr1e-5/checkpoints/ckpt200.pth'
+        self.model_ufloss.load_state_dict(torch.load(loss_uflossdir, "cpu",)["state_dict"])
+        self.model_ufloss.requires_grad_ = False
+
+        print("Successfully loaded UFLoss model (Traditional)")
+
+    def forward(self, output, target):
+
+        # Using traditional method to compute UFLoss
+        n_featuresq = 10
+        ix = torch.randint(0, n_featuresq, (1,))
+        iy = torch.randint(0, n_featuresq, (1,))
+        output_roll = roll(output.clone(), ix, iy)
+        target_roll = roll(target.clone(), ix, iy)
+        ufloss = nn.MSELoss()(
+            self.model_ufloss(output_roll)[0], self.model_ufloss(target_roll)[0]
+        )
+        return ufloss
+
+def roll(im, ix,iy):  
+    imx = torch.cat((im[:,:,-ix:,...], im[:,:,:-ix,...]),2)
+    return torch.cat((imx[:,:,:,-iy:,...], imx[:,:,:,:-iy,...]),3)

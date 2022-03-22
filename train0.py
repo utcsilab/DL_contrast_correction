@@ -28,7 +28,7 @@ parser.add_argument('-e','--epochs', type=int, default=4, metavar='', help = 'nu
 parser.add_argument('-rs','--random_seed', type=int, default=80, metavar='', help = 'Random reed for the PRNGs of the training') #optional argument
 parser.add_argument('-lr','--learn_rate', type=float, default=0.0001, metavar='', help = 'Learning rate for the Generator') #optional argument
 parser.add_argument('-dlr','--disc_learn_rate', type=float, default=0.00001, metavar='', help = 'Learning rate for the discriminator') #optional argument
-parser.add_argument('-ma','--model_arc', type=str, default='UNET', metavar='',choices=['UNET', 'GAN'], help = 'Choose the type of network to learn')
+parser.add_argument('-ma','--model_arc', type=str, default='GAN', metavar='',choices=['UNET', 'GAN'], help = 'Choose the type of network to learn')
 parser.add_argument('-mm','--model_mode', type=str, default='Full_img', metavar='',choices=['Full_img', 'Patch'], help = 'Choose the mode to train the network either pass full image or patches')
 parser.add_argument('-ps','--patch_size',type=int,default=72,metavar='',help='size of patches')
 parser.add_argument('-pst','--patch_stride',type=int,default=72,metavar='',help='stride of patches')
@@ -45,6 +45,7 @@ parser.add_argument('-ss','--step_size',type=int,default=10,metavar='',help='Num
 parser.add_argument('-dg','--decay_gamma',type=float, default=0.5, metavar='', help = 'gamma decay rate')
 parser.add_argument('-nc','--n_channels',type=int,default=1,metavar='',help='number of channels for UNET')
 parser.add_argument('-rd','--root_dir', type=str, default='/home/sidharth/sid_notebooks/UNET_GAN2_training/', metavar='', help = 'root directory where all the code is')
+parser.add_argument('-pl','--perceptual_loss', type=str, default='UFLoss', metavar='',choices=['VGG_based', 'UFLoss'], help = 'Choose the type of perceptual loss')
 args = parser.parse_args()
 # saved params.sh and then give that as input to the 
 
@@ -64,8 +65,8 @@ device = torch.device("cuda:{}".format(args.GPU_idx) if torch.cuda.is_available(
 args.device      = device
 
 # Global directory where results will be stored for the network training runs
-global_dir = args.root_dir  + 'train_results/model_%s_data_%s_loss_%s_mode_%s'\
-    %(args.model_arc, args.data_file, args.loss_type, args.model_mode) 
+global_dir = args.root_dir  + 'train_results/model_%s_data_%s_loss_%s_mode_%s_perc_loss_type_%s'\
+    %(args.model_arc, args.data_file, args.loss_type, args.model_mode, args.perceptual_loss) 
 if not os.path.exists(global_dir):
     os.makedirs(global_dir)
 args.global_dir = global_dir

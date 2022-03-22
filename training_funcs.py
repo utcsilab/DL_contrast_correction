@@ -4,7 +4,7 @@ import numpy as np
 from tqdm import tqdm
 import torch.optim as optim
 from torch.optim.lr_scheduler import StepLR
-from losses import SSIMLoss, generator_loss, discriminator_loss, generator_loss_separately, adversarial_loss, NRMSELoss, VGGPerceptualLoss
+from losses import SSIMLoss, generator_loss, discriminator_loss, generator_loss_separately, adversarial_loss, NRMSELoss, VGGPerceptualLoss, UFLoss
 from plotter import plotter_GAN, plotter_UNET
 import sys
 
@@ -50,7 +50,10 @@ def GAN_training(hparams):#separate function for doing generative training
         main_loss  = nn.L1Loss()
     elif (hparams.loss_type=='L2'):
         main_loss  = nn.MSELoss() #same as L2 loss
-    VGG_loss  = VGGPerceptualLoss().to(device) #perceptual loss 
+    if(hparams.perceptual_loss=='UFLoss'):
+        perceptual_loss  = UFLoss().to(device) #perceptual loss 
+    elif(hparams.perceptual_loss=='VGG_based'):
+        perceptual_loss  = VGGPerceptualLoss().to(device) #perceptual loss 
 
     disc_epoch = hparams.disc_epoch #discriminator will be trained these many times
     gen_epoch  = hparams.gen_epoch #generator will be trained for these many iterations 
@@ -144,9 +147,9 @@ def GAN_training(hparams):#separate function for doing generative training
                 #the 1 tensor need to be changed based on the max value in the input images
                 # by default perceptual loss is added to all losses
                 if (hparams.loss_type=='SSIM'):
-                    loss_val = main_loss(generated_image, target_img, torch.tensor([1]).to(device)) + Lambda_b*VGG_loss(generated_image, target_img)
+                    loss_val = main_loss(generated_image, target_img, torch.tensor([1]).to(device)) + Lambda_b*perceptual_loss(generated_image, target_img)
                 else:
-                    loss_val = main_loss(generated_image, target_img) + Lambda_b*VGG_loss(generated_image, target_img)
+                    loss_val = main_loss(generated_image, target_img) + Lambda_b*perceptual_loss(generated_image, target_img)
                 G_loss = Lambda*gen_loss + loss_val  
                 # compute gradients and run optimizer step
                 G_optimizer.zero_grad()
@@ -233,7 +236,7 @@ def UNET_training(hparams):
         main_loss  = nn.MSELoss() #same as L2 loss
     elif (hparams.loss_type=='Perc_L'):#perceptual loss based on vgg
         main_loss  = VGGPerceptualLoss().to(device)
-    VGG_loss  = VGGPerceptualLoss().to(device)
+    perceptual_loss  = VGGPerceptualLoss().to(device)
     train_loss = np.zeros((epochs,train_data_len)) #lists to store the losses of discriminator and generator
     val_loss = np.zeros((epochs,val_data_len)) #lists to store the losses of discriminator and generator
     if (hparams.model_mode=='Patch'):
@@ -260,9 +263,9 @@ def UNET_training(hparams):
             #the 1 tensor need to be changed based on the max value in the input images
             # by default now every loss will have the perceptual loss included
             if (hparams.loss_type=='SSIM'):
-                loss_val = main_loss(generated_image, target_img, torch.tensor([1]).to(device)) + Lambda_b*VGG_loss(generated_image, target_img)
+                loss_val = main_loss(generated_image, target_img, torch.tensor([1]).to(device)) + Lambda_b*perceptual_loss(generated_image, target_img)
             else:
-                loss_val = main_loss(generated_image, target_img) + Lambda_b*VGG_loss(generated_image, target_img)
+                loss_val = main_loss(generated_image, target_img) + Lambda_b*perceptual_loss(generated_image, target_img)
 
             # compute gradients and run optimizer step
             G_optimizer.zero_grad()
