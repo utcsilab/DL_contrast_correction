@@ -147,17 +147,40 @@ class UFLoss(nn.Module):
 
     def forward(self, output, target):
 
+        # # Using traditional method to compute UFLoss
+        # n_featuresq = 10
+        # ix = torch.randint(0, n_featuresq, (1,))
+        # iy = torch.randint(0, n_featuresq, (1,))
+        # output_roll = roll(output.clone(), ix, iy)
+        # target_roll = roll(target.clone(), ix, iy)
+        # ufloss = nn.MSELoss()(
+        #     self.model_ufloss(output_roll)[0], self.model_ufloss(target_roll)[0]
+        # )
+        # return ufloss
+
+
         # Using traditional method to compute UFLoss
         n_featuresq = 10
-        ix = torch.randint(0, n_featuresq, (1,))
-        iy = torch.randint(0, n_featuresq, (1,))
-        output_roll = roll(output.clone(), ix, iy)
-        target_roll = roll(target.clone(), ix, iy)
-        ufloss = nn.MSELoss()(
-            self.model_ufloss(output_roll)[0], self.model_ufloss(target_roll)[0]
-        )
+        patch_size = 80
+        unfold = torch.nn.Unfold(kernel_size=patch_size,stride=40)
+
+        unfolded_target = unfold(target.clone())
+        patches = unfolded_target.reshape(unfolded_target.shape[0],patch_size,patch_size,unfolded_target.shape[-1])
+        patches = patches.permute(0,3,1,2)
+        # why to select random patches, calculate the loss on all the patches
+        # random_patch_indices = torch.randint(0,patches.shape[1],(n_featuresq,))
+        target_patches = patches.reshape(patches.shape[0]*patches.shape[1],patches.shape[2],patches.shape[3])
+        target_features = self.model_ufloss(target_patches[:,None,...])
+        target_features = target_features.reshape(patches.shape[0],patches.shape[1],target_features.shape[-1])
+
+        unfolded_output = unfold(output.clone())
+        patches = unfolded_output.reshape(unfolded_output.shape[0],patch_size,patch_size,unfolded_output.shape[-1])
+        patches = patches.permute(0,3,1,2)
+        output_patches = patches.reshape(patches.shape[0]*patches.shape[1],patches.shape[2],patches.shape[3])
+        output_features = self.model_ufloss(output_patches[:,None,...])
+        output_features = output_features.reshape(patches.shape[0],patches.shape[1],output_features.shape[-1])
+        
+        ufloss = nn.MSELoss()(target_features,output_features)
+
         return ufloss
 
-def roll(im, ix,iy):  
-    imx = torch.cat((im[:,:,-ix:,...], im[:,:,:-ix,...]),2)
-    return torch.cat((imx[:,:,:,-iy:,...], imx[:,:,:,:-iy,...]),3)
