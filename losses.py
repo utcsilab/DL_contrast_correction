@@ -136,7 +136,7 @@ import ufloss_files.resnet as resnet
 from ufloss_files.model import Model
 import sigpy as sp
 class UFLoss(nn.Module):
-    def __init__(self, patch_size):
+    def __init__(self, patch_size, UFLoss_roll):
         super().__init__()
         self.model_ufloss = Model(resnet.resnet18_m, feature_dim=128, data_length=34440)
         if (patch_size==40):
@@ -146,8 +146,8 @@ class UFLoss(nn.Module):
         self.model_ufloss.load_state_dict(torch.load(loss_uflossdir, "cpu",)["state_dict"])
         self.model_ufloss.requires_grad_ = False
         self.patch_size = patch_size
+        self.UFLoss_roll = UFLoss_roll
 
-        # print("Successfully loaded UFLoss model (Traditional)")
 
     def forward(self, output, target):
 
@@ -156,8 +156,12 @@ class UFLoss(nn.Module):
         patch_stride = int(self.patch_size/2)
         ix = torch.randint(0, patch_stride, (1,))
         iy = torch.randint(0, patch_stride, (1,))
-        output_roll = roll(output.clone(), ix, iy)
-        target_roll = roll(target.clone(), ix, iy)
+        if self.UFLoss_roll==True:
+            output_roll = roll(output.clone(), ix, iy)
+            target_roll = roll(target.clone(), ix, iy)
+        else:
+            output_roll = output.clone()
+            target_roll = target.clone()
 
         unfold = torch.nn.Unfold(kernel_size=self.patch_size,stride=patch_stride)
 

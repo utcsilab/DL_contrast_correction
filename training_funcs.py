@@ -51,7 +51,7 @@ def GAN_training(hparams):#separate function for doing generative training
     elif (hparams.loss_type=='L2'):
         main_loss  = nn.MSELoss() #same as L2 loss
     if(hparams.perceptual_loss=='UFLoss'):
-        perceptual_loss  = UFLoss(hparams.patch_size).to(device) #perceptual loss 
+        perceptual_loss  = UFLoss(hparams.patch_size,hparams.UFLoss_roll).to(device) #perceptual loss 
     elif(hparams.perceptual_loss=='VGG_based'):
         perceptual_loss  = VGGPerceptualLoss().to(device) #perceptual loss 
 
