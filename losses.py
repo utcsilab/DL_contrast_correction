@@ -136,12 +136,16 @@ import ufloss_files.resnet as resnet
 from ufloss_files.model import Model
 import sigpy as sp
 class UFLoss(nn.Module):
-    def __init__(self):
+    def __init__(self, patch_size):
         super().__init__()
         self.model_ufloss = Model(resnet.resnet18_m, feature_dim=128, data_length=34440)
-        loss_uflossdir = '/home/sidharth/sid_notebooks/UFLoss/train_alma_UFLoss_feature_128_features_date_20220321_temperature_1_lr1e-5/checkpoints/ckpt200.pth'
+        if (patch_size==40):
+            loss_uflossdir = '/home/sidharth/sid_notebooks/UFLoss/train_alma_UFLoss_feature_128_features_date_20220330_temperature_1_lr1e-5_patch_size_40/checkpoints/ckpt200.pth'
+        elif(patch_size==80):
+            loss_uflossdir = '/home/sidharth/sid_notebooks/UFLoss/train_alma_UFLoss_feature_128_features_date_20220321_temperature_1_lr1e-5_patch_size_80/checkpoints/ckpt200.pth'
         self.model_ufloss.load_state_dict(torch.load(loss_uflossdir, "cpu",)["state_dict"])
         self.model_ufloss.requires_grad_ = False
+        self.patch_size = patch_size
 
         # print("Successfully loaded UFLoss model (Traditional)")
 
@@ -149,17 +153,16 @@ class UFLoss(nn.Module):
 
         # Using traditional method to compute UFLoss
         n_featuresq = 10
-        patch_size = 80
-        patch_stride = 40
+        patch_stride = int(self.patch_size/2)
         ix = torch.randint(0, patch_stride, (1,))
         iy = torch.randint(0, patch_stride, (1,))
         output_roll = roll(output.clone(), ix, iy)
         target_roll = roll(target.clone(), ix, iy)
 
-        unfold = torch.nn.Unfold(kernel_size=patch_size,stride=patch_stride)
+        unfold = torch.nn.Unfold(kernel_size=self.patch_size,stride=patch_stride)
 
         unfolded_target = unfold(target_roll.clone())
-        patches = unfolded_target.reshape(unfolded_target.shape[0],patch_size,patch_size,unfolded_target.shape[-1])
+        patches = unfolded_target.reshape(unfolded_target.shape[0],self.patch_size,self.patch_size,unfolded_target.shape[-1])
         patches = patches.permute(0,3,1,2)
         # why to select random patches, calculate the loss on all the patches
         # random_patch_indices = torch.randint(0,patches.shape[1],(n_featuresq,))
@@ -168,7 +171,7 @@ class UFLoss(nn.Module):
         target_features = target_features.reshape(patches.shape[0],patches.shape[1],target_features.shape[-1])
 
         unfolded_output = unfold(output_roll.clone())
-        patches = unfolded_output.reshape(unfolded_output.shape[0],patch_size,patch_size,unfolded_output.shape[-1])
+        patches = unfolded_output.reshape(unfolded_output.shape[0],self.patch_size,self.patch_size,unfolded_output.shape[-1])
         patches = patches.permute(0,3,1,2)
         output_patches = patches.reshape(patches.shape[0]*patches.shape[1],patches.shape[2],patches.shape[3])
         output_features = self.model_ufloss(output_patches[:,None,...])
