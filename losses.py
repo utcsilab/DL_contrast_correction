@@ -143,21 +143,9 @@ class UFLoss(nn.Module):
         self.model_ufloss.load_state_dict(torch.load(loss_uflossdir, "cpu",)["state_dict"])
         self.model_ufloss.requires_grad_ = False
 
-        print("Successfully loaded UFLoss model (Traditional)")
+        # print("Successfully loaded UFLoss model (Traditional)")
 
     def forward(self, output, target):
-
-        # # Using traditional method to compute UFLoss
-        # n_featuresq = 10
-        # ix = torch.randint(0, n_featuresq, (1,))
-        # iy = torch.randint(0, n_featuresq, (1,))
-        # output_roll = roll(output.clone(), ix, iy)
-        # target_roll = roll(target.clone(), ix, iy)
-        # ufloss = nn.MSELoss()(
-        #     self.model_ufloss(output_roll)[0], self.model_ufloss(target_roll)[0]
-        # )
-        # return ufloss
-
 
         # Using traditional method to compute UFLoss
         n_featuresq = 10

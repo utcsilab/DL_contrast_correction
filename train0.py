@@ -30,8 +30,8 @@ parser.add_argument('-lr','--learn_rate', type=float, default=0.0001, metavar=''
 parser.add_argument('-dlr','--disc_learn_rate', type=float, default=0.00001, metavar='', help = 'Learning rate for the discriminator') #optional argument
 parser.add_argument('-ma','--model_arc', type=str, default='GAN', metavar='',choices=['UNET', 'GAN'], help = 'Choose the type of network to learn')
 parser.add_argument('-mm','--model_mode', type=str, default='Full_img', metavar='',choices=['Full_img', 'Patch'], help = 'Choose the mode to train the network either pass full image or patches')
-parser.add_argument('-ps','--patch_size',type=int,default=72,metavar='',help='size of patches')
-parser.add_argument('-pst','--patch_stride',type=int,default=72,metavar='',help='stride of patches')
+parser.add_argument('-ps','--patch_size',type=int,default=80,metavar='',help='size of patches')
+parser.add_argument('-pst','--patch_stride',type=int,default=80,metavar='',help='stride of patches')
 parser.add_argument('-l','--loss_type', type=str, default='L1', metavar='',choices=['SSIM', 'L1', 'L2'], help = 'Choose the loss type for the main network')
 parser.add_argument('-G','--GPU_idx',  type =int, default=2, metavar='',  help='GPU to Use')
 parser.add_argument('-lb','--Lambda', type=float, default=0,metavar='', help = 'variable to weight loss fn w.r.t adverserial loss')
