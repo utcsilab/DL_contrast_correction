@@ -46,7 +46,7 @@ parser.add_argument('-dg','--decay_gamma',type=float, default=0.5, metavar='', h
 parser.add_argument('-nc','--n_channels',type=int,default=1,metavar='',help='number of channels for UNET')
 parser.add_argument('-rd','--root_dir', type=str, default='/home/sidharth/sid_notebooks/UNET_GAN2_training/', metavar='', help = 'root directory where all the code is')
 parser.add_argument('-pl','--perceptual_loss', type=str, default='UFLoss', metavar='',choices=['VGG_based', 'UFLoss'], help = 'Choose the type of perceptual loss')
-parser.add_argument('-Ur','--UFLoss_roll', type=str, default='True', metavar='',choices=['True', 'False'], help = 'Whether to use roll or not in UFLoss')
+parser.add_argument('-Ur','--UFLoss_roll', type=str, default='False', metavar='',choices=['True', 'False'], help = 'Whether to use roll or not in UFLoss')
 args = parser.parse_args()
 print(args) #print the given parameters till now
 

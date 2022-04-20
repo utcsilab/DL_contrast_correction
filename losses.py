@@ -152,8 +152,9 @@ class UFLoss(nn.Module):
     def forward(self, output, target):
 
         # Using traditional method to compute UFLoss
-        n_featuresq = 10
-        patch_stride = int(self.patch_size/2)
+        n_featuresq = 100
+        # patch_stride = int(self.patch_size/2)
+        patch_stride = 5 # as suggested by jon
         ix = torch.randint(0, patch_stride, (1,))
         iy = torch.randint(0, patch_stride, (1,))
         if self.UFLoss_roll==True:
@@ -168,8 +169,9 @@ class UFLoss(nn.Module):
         unfolded_target = unfold(target_roll.clone())
         patches = unfolded_target.reshape(unfolded_target.shape[0],self.patch_size,self.patch_size,unfolded_target.shape[-1])
         patches = patches.permute(0,3,1,2)
-        # why to select random patches, calculate the loss on all the patches
-        # random_patch_indices = torch.randint(0,patches.shape[1],(n_featuresq,))
+        # why to select random patches, calculate the loss on all the patches, for lower strides required because not all patches can go in together
+        random_patch_indices = torch.randint(0,patches.shape[1],(n_featuresq,))
+        patches = patches[:,random_patch_indices,:,:]
         target_patches = patches.reshape(patches.shape[0]*patches.shape[1],patches.shape[2],patches.shape[3])
         target_features = self.model_ufloss(target_patches[:,None,...])
         target_features = target_features.reshape(patches.shape[0],patches.shape[1],target_features.shape[-1])
@@ -177,6 +179,7 @@ class UFLoss(nn.Module):
         unfolded_output = unfold(output_roll.clone())
         patches = unfolded_output.reshape(unfolded_output.shape[0],self.patch_size,self.patch_size,unfolded_output.shape[-1])
         patches = patches.permute(0,3,1,2)
+        patches = patches[:,random_patch_indices,:,:]
         output_patches = patches.reshape(patches.shape[0]*patches.shape[1],patches.shape[2],patches.shape[3])
         output_features = self.model_ufloss(output_patches[:,None,...])
         output_features = output_features.reshape(patches.shape[0],patches.shape[1],output_features.shape[-1])
