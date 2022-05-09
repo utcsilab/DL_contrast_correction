@@ -152,9 +152,9 @@ class UFLoss(nn.Module):
     def forward(self, output, target):
 
         # Using traditional method to compute UFLoss
-        n_featuresq = 100
+        n_featuresq = 100 # use random number of patches for calculating the UFLoss
         # patch_stride = int(self.patch_size/2)
-        patch_stride = 5 # as suggested by jon
+        patch_stride = 8 # as suggested by jon
         ix = torch.randint(0, patch_stride, (1,))
         iy = torch.randint(0, patch_stride, (1,))
         if self.UFLoss_roll==True:
