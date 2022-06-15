@@ -73,8 +73,8 @@ args.global_dir = global_dir
 # Creating the dataloaders
 # have the training text file location in the argparser
 train_data_dir = args.root_dir + args.data_file + '/training_samples.txt'
-train_dataset = Exp_contrast_Dataset(train_data_dir,transform=transforms.Compose([
-    Normalize_by_max(),Toabsolute()]))
+train_dataset = Exp_contrast_Dataset(train_data_dir,transform=transforms.Compose([Normalize_by_max(),Toabsolute()])
+    ,target_transform=[horizontal_flip(),vertical_flip(),vert_hori_flip()])
 
 val_data_dir = args.root_dir + args.data_file +  '/val_samples.txt'
 val_dataset = Exp_contrast_Dataset(val_data_dir,transform=transforms.Compose([

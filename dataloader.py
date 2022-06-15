@@ -74,6 +74,17 @@ class Exp_contrast_Dataset(Dataset):
         if self.transform is not None:
             X = self.transform(X)
             y = self.transform(y)
+        if self.target_transform is not None:# this is for the random horizontal and vertical flips
+            rand_toss = np.random.choice(4, 1)
+            if (rand_toss == 0):
+                X = self.target_transform[0](X)
+                y = self.target_transform[0](y)
+            elif (rand_toss == 1):
+                X = self.target_transform[1](X)
+                y = self.target_transform[1](y)
+            elif (rand_toss == 2):
+                X = self.target_transform[2](X)
+                y = self.target_transform[2](y)
         #normalizing with a TI_max value
         TI_max = 3000 #choosen heuristically, none of the TI values are larger than 2500ms
         TI_array = np.ones((X.shape))*params[2]/TI_max
@@ -88,27 +99,20 @@ class ToTensor(object):
         #convert to tensor 
         return torch.from_numpy(object).float()
 
-class vertical_flip(object):
-    """Convert ndarrays in sample to Tensors."""
-
-    def __call__(self, object):
-        return np.rot90(object, 2).copy()
-
 class horizontal_flip(object):
-    """Convert ndarrays in sample to Tensors."""
-
     def __call__(self, object):
-        return np.rot90(object, 1).copy()
+        return np.fliplr(object).copy()#flip left right
 
-class horizontal_flip2(object):
-    """Convert ndarrays in sample to Tensors."""
-
+class vertical_flip(object):
     def __call__(self, object):
-        return np.rot90(object, 3).copy()
+        return np.flipud(object).copy()#flip upside down
+
+class vert_hori_flip(object):
+    def __call__(self, object):
+        return np.flipud(np.fliplr(object)).copy()#flip upside down and also left right
 
 class rand_rotate(object):
-    """Convert ndarrays in sample to Tensors."""
-
+    """ random rotations about the z axis, not much usefull for this case here"""
     def __call__(self, object):
         #convert to tensor 
         rand_toss = np.random.choice(4, 1)
@@ -164,3 +168,7 @@ class Normalize_by_WM(object):
         object = object/avg_WM_signal
         object[np.abs(object)>4] = 0
         return object
+
+
+
+

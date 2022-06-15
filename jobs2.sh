@@ -21,16 +21,16 @@ export patch_stride=72
 export loss_type='L1'
 export Lambda=1
 export Lambda_b=.1
-export data_file='repo_text_files_1600TI'
+export data_file='repo_text_files_june14'
 export disc_epoch=20
 export gen_epoch=10
 export filter=64
-export batch_size=16
+export batch_size=24
 export step_size=10
 export decay_gamma=0.5
 export n_channels=1
 export root_dir='/home/sidharth/sid_notebooks/UNET_GAN2_training/'
-export GPU_idx=4
+export GPU_idx=2
 
 # source params.sh 
 
@@ -40,5 +40,5 @@ export GPU_idx=4
 python train0.py -e ${epochs} -lr ${learn_rate} -dlr ${disc_learn_rate} -df ${data_file} -ma ${model_arc} -l ${loss_type} -mm ${model_mode} -G ${GPU_idx} -lb 1 -lb_b 0.1 -de ${disc_epoch} -ge ${gen_epoch} -f ${filter} -b ${batch_size}
 
 
-python train0.py -e ${epochs} -lr ${learn_rate} -dlr ${disc_learn_rate} -df ${data_file} -ma ${model_arc} -l ${loss_type} -mm ${model_mode} -G ${GPU_idx} -lb 0.1 -lb_b 0.01 -de ${disc_epoch} -ge ${gen_epoch} -f ${filter} -b ${batch_size}
+# python train0.py -e ${epochs} -lr ${learn_rate} -dlr ${disc_learn_rate} -df ${data_file} -ma ${model_arc} -l ${loss_type} -mm ${model_mode} -G ${GPU_idx} -lb 0.1 -lb_b 0.01 -de ${disc_epoch} -ge ${gen_epoch} -f ${filter} -b ${batch_size}
  
