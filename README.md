@@ -27,7 +27,7 @@ Then, create a new Anaconda environment and install the dependencies:
 
 ## Training New Models
 
-To train a new GANl on the dataset, run the following bash script: 
+To train a new GAN model on the dataset, run the following bash script: 
 
 `DL_contrast_correction/job_training_script.sh`
 
@@ -56,3 +56,8 @@ export GPU_idx=3
 
 python train0.py -e ${epochs} -lr ${learn_rate} -dlr ${disc_learn_rate} -df ${data_file} -ma ${model_arc} -l ${loss_type} -G ${GPU_idx} -lb ${Lambda} -lb_b ${Lambda_b} -de ${disc_epoch} -ge ${gen_epoch} -f ${filter} -b ${batch_size}
 ```
+The parameters can be appropriately updated to train a GAN for different configurations like different generator architectures, loss types, training iterations etc.
+
+## Inference
+
+During inference only load the pretrained generator network and use directly to generate the corrected contrast images. More details about that can find in the `visualizer.py`.
