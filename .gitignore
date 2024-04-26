@@ -11,3 +11,4 @@ python/.ipynb_checkpoints/
 *.ipynb 
 jupyter_notebooks/
 repo_text_files/
+.vscode/
