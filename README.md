@@ -23,3 +23,36 @@ First, clone the repository:
 Then, create a new Anaconda environment and install the dependencies:
 
 `conda env create -f environment.yml -n Transfer_GAN`
+
+
+## Training New Models
+
+To train a new GANl on the dataset, run the following bash script: 
+
+`DL_contrast_correction/job_training_script.sh`
+
+```
+export epochs="1000"
+export random_seed="80"
+export learn_rate='0.001'
+export disc_learn_rate='0.00001'
+export model_arc='UNET'
+export patch_size=72
+export patch_stride=72
+export loss_type='L2'
+export Lambda=0
+export Lambda_b=0
+export data_file='repo_text_files_0.8'
+export disc_epoch=20
+export gen_epoch=10
+export filter=64
+export batch_size=64
+export step_size=10000
+export decay_gamma=0.5
+export n_channels=6
+export root_dir='/csiNAS/sidharth/DL_contrast_physics'
+export GPU_idx=3
+
+
+python train0.py -e ${epochs} -lr ${learn_rate} -dlr ${disc_learn_rate} -df ${data_file} -ma ${model_arc} -l ${loss_type} -G ${GPU_idx} -lb ${Lambda} -lb_b ${Lambda_b} -de ${disc_epoch} -ge ${gen_epoch} -f ${filter} -b ${batch_size}
+```
