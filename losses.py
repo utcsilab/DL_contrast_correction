@@ -128,3 +128,19 @@ class VGGPerceptualLoss(torch.nn.Module):
                 gram_y = act_y @ act_y.permute(0, 2, 1)
                 loss += torch.nn.functional.l1_loss(gram_x, gram_y)
         return loss
+
+
+
+# Self implemented and taken from https://github.com/utcsilab/deep-jsense/blob/main/losses.py
+# https://pytorch.org/ignite/generated/ignite.metrics.PSNR.html correct definition
+# just add -10*np.log10(PSNR()) to be equal to the pytorch forum definition
+class PSNRLoss(nn.Module):
+    def __init__(self):
+        super().__init__()
+        pass
+
+    def forward(self, X: torch.Tensor, Y: torch.Tensor):
+        error_mse = torch.mean(torch.square(X - Y))
+        self_max  = torch.max(torch.square(X))
+
+        return error_mse / self_max

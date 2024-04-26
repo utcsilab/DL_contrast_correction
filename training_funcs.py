@@ -7,6 +7,7 @@ from torch.optim.lr_scheduler import StepLR
 from losses import SSIMLoss, generator_loss, discriminator_loss, generator_loss_separately, adversarial_loss, NRMSELoss, VGGPerceptualLoss
 from plotter import plotter_GAN, plotter_UNET
 import sys
+from Unet import Unet
 
 def binary_acc(disc_out, actual_out):#function for calculating accuracy of discriminator
     m = nn.Sigmoid()#sigmoid is removed from the discriminator def to automatically handle the edge cases
@@ -30,8 +31,6 @@ def GAN_training(hparams):#separate function for doing generative training
     Discriminator1 = hparams.discriminator
     train_loader = hparams.train_loader 
     val_loader   = hparams.val_loader   
-    patch_size   = hparams.patch_size
-    patch_stride = hparams.patch_stride
     local_dir = hparams.global_dir + '/gen_lr_{:.5f}_disc_lr_{:.5f}_epochs_{}_lambda_{}_gen_epoch_{}_disc_epoch_{}_Lambda_b{}'.format(hparams.learn_rate,hparams.disc_learn_rate,hparams.epochs,hparams.Lambda,hparams.gen_epoch,hparams.disc_epoch,Lambda_b) 
     if not os.path.isdir(local_dir):
         os.makedirs(local_dir)
@@ -66,27 +65,18 @@ def GAN_training(hparams):#separate function for doing generative training
     val_ssim_loss  = np.zeros((epochs,val_data_len))
     SSIM       = SSIMLoss().to(device)
     NRMSE      = NRMSELoss()
-    if (hparams.model_mode=='Patch'):
-        unfold = torch.nn.Unfold(kernel_size=patch_size, stride=patch_stride) # Unfold kernel
     # Loop over epochs
     for epoch in tqdm(range(epochs), total=epochs, leave=True):
         # at each epoch I re-initiate the discriminator optimizer
         for disc_epoch_idx in range(disc_epoch):#first training the discriminator
             for index, (input_img, target_img, params) in enumerate(train_loader):
-                if (hparams.model_mode=='Patch'):
-                    unfolded_in, unfolded_out = unfold(input_img[None,...]), unfold(target_img[None,...])
-                    patches_in,  patches_out  = unfolded_in.reshape(1,patch_size,patch_size,-1), unfolded_out.reshape(1,patch_size,patch_size,-1)
-                    patches_in,  patches_out  = patches_in.permute(3,0,1,2), patches_out.permute(3,0,1,2)
-                    input_img, target_img = patches_in.to(device), patches_out.to(device) # Transfer to GPU
-                else:
-                    pass
-                    # commenting out the next line to work with TI value pass
-                    # input_img, target_img = input_img[None,...], target_img[None,...]
-                    target_img = target_img[None,...]
+                target_img = target_img[None,...]
                 # Transfer to GPU
                 input_img, target_img = input_img.to(device), target_img.to(device)
                 target_img = target_img.permute(1,0,2,3)# to make it work with batch size > 1
-                generated_image = UNet1(input_img)
+                # the network will only estimate the correction multiplicative term for now
+                multiplicative_term = UNet1(input_img)
+                generated_image = multiplicative_term * input_img[:,0,None,:,:]
                 G = Discriminator1(generated_image)
 
                 # ground truth labels real and fake
@@ -113,27 +103,19 @@ def GAN_training(hparams):#separate function for doing generative training
                 D_loss_real[epoch,disc_epoch_idx,index] =  D_real_loss.cpu().detach().numpy()
                 D_loss_fake[epoch,disc_epoch_idx,index] =  D_fake_loss.cpu().detach().numpy()
             accuracy_results[epoch,disc_epoch_idx] = np.sum(D_out_acc[epoch,disc_epoch_idx,:])/(2*train_data_len)
-            D_scheduler.step()
+            # D_scheduler.step()
         # D_loss_list[epoch,:] =  D_loss_list[epoch,:]/disc_epoch #avg loss over disc_epoch training of discriminator
         # D_loss_real[epoch,:] =  D_loss_real[epoch,:]/disc_epoch
         # D_loss_fake[epoch,:] =  D_loss_fake[epoch,:]/disc_epoch
 
         for gen_epoch_idx in range(gen_epoch):
             for index, (input_img, target_img, params) in enumerate(train_loader):
-                if (hparams.model_mode=='Patch'):
-                    unfolded_in, unfolded_out = unfold(input_img[None,...]), unfold(target_img[None,...])
-                    patches_in,  patches_out  = unfolded_in.reshape(1,patch_size,patch_size,-1), unfolded_out.reshape(1,patch_size,patch_size,-1)
-                    patches_in,  patches_out  = patches_in.permute(3,0,1,2), patches_out.permute(3,0,1,2)
-                    input_img, target_img = patches_in.to(device), patches_out.to(device) # Transfer to GPU
-                else:
-                    pass
-                    # commenting out the next line to work with TI value pass
-                    # input_img, target_img = input_img[None,...], target_img[None,...]
-                    target_img = target_img[None,...]
+                target_img = target_img[None,...]
                 # Transfer to GPU
                 input_img, target_img = input_img.to(device), target_img.to(device)
                 target_img = target_img.permute(1,0,2,3)# to make it work with batch size > 1
-                generated_image = UNet1(input_img)
+                multiplicative_term = UNet1(input_img)
+                generated_image = multiplicative_term * input_img[:,0,None,:,:]
                 G = Discriminator1(generated_image)
 
                 # ground truth labels real and fake
@@ -166,15 +148,17 @@ def GAN_training(hparams):#separate function for doing generative training
             # D_out_fake[epoch,:] = D_out_fake[epoch,:]/gen_epoch          
             # D_out_real[epoch,:] = D_out_fake[epoch,:]/gen_epoch 
             # Generator training ends
-        # Scheduler
-        G_scheduler.step()
+        # Scheduler should be in the generator epochs or the overall epochs need to check this
+        # G_scheduler.step()
         # saving the validation set results, now 
         for index, (input_img, target_img, params) in enumerate(val_loader):
             target_img = target_img[None,...]
             # Transfer to GPU
             input_img, target_img = input_img.to(device), target_img.to(device)
             target_img = target_img.permute(1,0,2,3)# to make it work with batch size > 1
-            generated_image = UNet1(input_img)
+
+            multiplicative_term = UNet1(input_img)
+            generated_image = multiplicative_term * input_img[:,0,None,:,:]
             # SSIM def is defined in a way so that the network tries to minimize it
             val_ssim_loss[epoch,index] = 1 - SSIM(generated_image, target_img, torch.tensor([1]).to(device))
             val_nrmse_loss[epoch,index] = NRMSE(generated_image, target_img)
@@ -217,9 +201,9 @@ def UNET_training(hparams):
     UNet1        = hparams.generator
     train_loader = hparams.train_loader 
     val_loader   = hparams.val_loader   
-    patch_size   = hparams.patch_size
     Lambda_b = hparams.Lambda_b
     G_optimizer  = optim.Adam(UNet1.parameters(), lr=lr)#right now choosing Adam, other option is SGD
+    # G_optimizer  = optim.SGD(UNet1.parameters(), lr=lr)#right now choosing Adam, other option is SGD
     scheduler    = StepLR(G_optimizer, hparams.step_size, gamma=hparams.decay_gamma)
     # initialize arrays for storing losses
     train_data_len = train_loader.__len__() # length of training_generator
@@ -234,28 +218,32 @@ def UNET_training(hparams):
     elif (hparams.loss_type=='Perc_L'):#perceptual loss based on vgg
         main_loss  = VGGPerceptualLoss().to(device)
     VGG_loss  = VGGPerceptualLoss().to(device)
+    NRMSE      = NRMSELoss()
+    SSIM       = SSIMLoss().to(device)
     train_loss = np.zeros((epochs,train_data_len)) #lists to store the losses of discriminator and generator
     val_loss = np.zeros((epochs,val_data_len)) #lists to store the losses of discriminator and generator
-    if (hparams.model_mode=='Patch'):
-        unfold = torch.nn.Unfold(kernel_size=hparams.patch_size, stride=hparams.patch_stride) # Unfold kernel
+    train_nrmse_loss = np.zeros((epochs,train_data_len))
+    val_nrmse_loss = np.zeros((epochs,val_data_len))
+    train_ssim_loss = np.zeros((epochs,train_data_len))
+    val_ssim_loss = np.zeros((epochs,val_data_len))
+    best_val_loss = 1000000000000 #variable to store the best val loss
+    local_dir = hparams.global_dir + '/learning_rate_{:.5f}_epochs_{}_lambda_{}_loss_type{}_Lambda_b{}'.format(hparams.learn_rate,hparams.epochs,hparams.Lambda,hparams.loss_type,Lambda_b) 
+    if not os.path.isdir(local_dir):
+        os.makedirs(local_dir)
+    best_UNet = Unet(in_chans = hparams.n_channels, out_chans=1,chans=hparams.filter, num_pool_layers = 4,drop_prob=0.0).to(hparams.device)
+
     # Loop over epochs
     for epoch in tqdm(range(epochs), total=epochs, leave=True):
+        UNet1.train()
         for index, (input_img, target_img, params) in enumerate(train_loader):
-            if (hparams.model_mode=='Patch'):
-                unfolded_in, unfolded_out = unfold(input_img[None,...]), unfold(target_img[None,...])
-                patches_in,  patches_out  = unfolded_in.reshape(1,patch_size,patch_size,-1), unfolded_out.reshape(1,patch_size,patch_size,-1)
-                patches_in,  patches_out  = patches_in.permute(3,0,1,2), patches_out.permute(3,0,1,2)
-                input_img, target_img = patches_in.to(device), patches_out.to(device) # Transfer to GPU
-            else:
-                pass
-                # commenting out the next line to work with TI value pass
-                # input_img, target_img = input_img[None,...], target_img[None,...]
-                target_img = target_img[None,...]
+            target_img = target_img[None,...]
             # Transfer to GPU
             input_img, target_img = input_img.to(device), target_img.to(device)
             target_img = target_img.permute(1,0,2,3)# to make it work with batch size > 1
 
-            generated_image = UNet1(input_img)
+            multiplicative_term = UNet1(input_img)
+            generated_image = multiplicative_term * input_img[:,0,None,:,:]
+
 
             #the 1 tensor need to be changed based on the max value in the input images
             # by default now every loss will have the perceptual loss included
@@ -270,23 +258,17 @@ def UNET_training(hparams):
             G_optimizer.step()
             train_loss[epoch,index] = loss_val.cpu().detach().numpy()
         # Scheduler
-        scheduler.step()
+        # scheduler.step()# this is hurting the learning process
+        UNet1.eval()
         for index, (input_img, target_img, params) in enumerate(val_loader):
-            if (hparams.model_mode=='Patch'):
-                unfolded_in, unfolded_out = unfold(input_img[None,...]), unfold(target_img[None,...])
-                patches_in,  patches_out  = unfolded_in.reshape(1,patch_size,patch_size,-1), unfolded_out.reshape(1,patch_size,patch_size,-1)
-                patches_in,  patches_out  = patches_in.permute(3,0,1,2), patches_out.permute(3,0,1,2)
-                input_img, target_img = patches_in.to(device), patches_out.to(device) # Transfer to GPU
-            else:
-                pass
-                # commenting out the next line to work with TI value pass
-                # input_img, target_img = input_img[None,...], target_img[None,...]
-                target_img = target_img[None,...]
+            target_img = target_img[None,...]
             # Transfer to GPU
             input_img, target_img = input_img.to(device), target_img.to(device)
             target_img = target_img.permute(1,0,2,3)# to make it work with batch size > 1
 
-            generated_image = UNet1(input_img)
+            multiplicative_term = UNet1(input_img)
+            generated_image = multiplicative_term * input_img[:,0,None,:,:]
+
 
             #the 1 tensor need to be changed based on the max value in the input images
             if (hparams.loss_type=='SSIM'):
@@ -294,19 +276,43 @@ def UNET_training(hparams):
             else:
                 loss_val = main_loss(generated_image, target_img)
             val_loss[epoch,index] = loss_val.cpu().detach().numpy()
+            val_ssim_loss[epoch,index] = 1 - SSIM(generated_image, target_img, torch.tensor([1]).to(device))
+            val_nrmse_loss[epoch,index] = NRMSE(generated_image, target_img)
+        if (np.mean(val_loss[epoch,:]) < best_val_loss):
+            # import time
+            # start_time = time.time()
+            best_epoch = epoch+1
+            # best_UNet = UNet1.clone()
+            best_UNet.load_state_dict(UNet1.state_dict())
+            best_UNet.eval()
+            best_val_loss = np.mean(val_loss[epoch,:])
+            # best_weights = local_dir +'/best_weights.pt' 
+            # torch.save({
+            #     'best_epoch': epoch+1,
+            #     'model_state_dict': UNet1.state_dict(),
+            #     'optimizer_state_dict': G_optimizer.state_dict(),
+            #     'hparams':hparams,
+            #     }, best_weights)
+            # print("--- %s seconds ---" % (time.time() - start_time))
+
     # Save models
-    local_dir = hparams.global_dir + '/learning_rate_{:.5f}_epochs_{}_lambda_{}_loss_type{}_Lambda_b{}'.format(hparams.learn_rate,hparams.epochs,hparams.Lambda,hparams.loss_type,Lambda_b) 
-    if not os.path.isdir(local_dir):
-        os.makedirs(local_dir)
+    import time
+    start_time = time.time()
     tosave_weights = local_dir +'/saved_weights.pt' 
     torch.save({
         'epoch': epoch,
         'model_state_dict': UNet1.state_dict(),
+        'best_state_dict': best_UNet.state_dict(),
+        'best_epoch': best_epoch,
         'optimizer_state_dict': G_optimizer.state_dict(),
         'train_loss': train_loss,
         'val_loss': val_loss,
+        'val_nrmse_loss':val_nrmse_loss,
+        'val_ssim_loss':val_ssim_loss,
         'hparams': hparams}, tosave_weights)
+    print("--- %s seconds ---" % (time.time() - start_time))
     sourceFile = open(local_dir +'/params_used.txt', 'w')
+    print('best_epoch', '=', best_epoch, file = sourceFile)
     for arg in vars(hparams):
         print(arg, '=', getattr(hparams, arg), file = sourceFile)
         if(arg=='val_loader'):

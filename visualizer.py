@@ -47,7 +47,7 @@ SSIM       = SSIMLoss()
 NRMSE      = NRMSELoss()
 for index, (input_img, target_img, params) in enumerate(test_loader):
     TE, TR, TI = int(params[0][0]),int(params[0][1]),int(params[0][2])
-    file_identifier = str(params[1])[31:50]
+    file_identifier = str(params[1])[10:30]
     model_out = UNet1(input_img[None,...].to(hparams.device)) 
     NN_output = model_out.cpu().detach().numpy().squeeze()
     actual_out = target_img.cpu().detach().numpy().squeeze()

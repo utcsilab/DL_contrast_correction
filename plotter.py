@@ -94,11 +94,8 @@ def plotter_GAN(hparams,tosave_weights,local_dir,UNet1,train_loader,val_loader):
         os.makedirs(local_dir + '/train_images')
     if not os.path.exists(local_dir + '/val_images'):
         os.makedirs(local_dir + '/val_images')
-    if hparams.model_mode == 'Full_img':
-        img_plotter(hparams, UNet1,val_loader,train_loader,local_dir)
-        test_img_plotter(hparams, UNet1, local_dir)
-    elif(hparams.model_mode == 'Patch'):
-        img_patch_plotter(hparams, UNet1,val_loader,train_loader,local_dir)
+    img_plotter(hparams, UNet1,val_loader,train_loader,local_dir)
+    test_img_plotter(hparams, UNet1, local_dir)
 
 
 
@@ -109,17 +106,33 @@ def plotter_UNET(hparams,tosave_weights,local_dir,UNet1,train_loader,val_loader)
     saved_results =  torch.load(tosave_weights)
     train_loss    =  saved_results['train_loss']
     val_loss      =  saved_results['val_loss']
-    fig, ax1 = plt.subplots()
-    ax2 = ax1.twinx()
-    ax1.plot(np.arange(hparams.epochs),np.mean(train_loss,axis=1), 'g-')
+    val_nrmse_loss      =  saved_results['val_nrmse_loss']
+    val_ssim_loss      =  saved_results['val_ssim_loss']
+    Lambda      = hparams.Lambda
+    fig, ax1 = plt.subplots(figsize=(8,10), nrows=2, ncols=1)
+    ax2 = ax1[0].twinx()
+    ax1[0].plot(np.arange(hparams.epochs),np.mean(train_loss,axis=1), 'g-')
     ax2.plot(np.arange(hparams.epochs),np.mean(val_loss,axis=1), 'b-')
 #     ax1.set_ylim([0, Lambda*.50])
-    ax1.set_xlabel('Epoch index')
-    ax1.set_ylabel('Train loss', color='g')
-    ax1.tick_params(axis='y', colors='g')
+    ax1[0].set_xlabel('Epoch index')
+    ax1[0].set_ylabel('Train loss', color='g')
+    ax1[0].tick_params(axis='y', colors='g')
     ax2.set_ylabel('Val loss', color='b')
     ax2.tick_params(axis='y', colors='b')
     plt.title('Train ({}) and val loss'.format(hparams.loss_type))
+
+
+    ax2 = ax1[1].twinx()
+    ax1[1].plot(np.arange(hparams.epochs),np.mean(val_nrmse_loss,axis=1), 'g-')
+    ax2.plot(np.arange(hparams.epochs),np.mean(val_ssim_loss,axis=1), 'b-')
+
+    ax1[1].set_xlabel('Epoch index')
+    ax1[1].set_ylabel('NRMSE', color='g')
+    ax1[1].tick_params(axis='y', colors='g')
+    ax2.set_ylabel('SSIM', color='b')
+    ax2.tick_params(axis='y', colors='b')
+    plt.title('Avg. NRMSE and SSIM (Val), $\lambda$ = {}'.format(Lambda))
+
     # Save
     plt.tight_layout()
     plt.savefig(local_dir + '/UNET_loss_curves.png', dpi=100)
@@ -131,11 +144,9 @@ def plotter_UNET(hparams,tosave_weights,local_dir,UNet1,train_loader,val_loader)
         os.makedirs(local_dir + '/train_images')
     if not os.path.exists(local_dir + '/val_images'):
         os.makedirs(local_dir + '/val_images')
-    if hparams.model_mode == 'Full_img':
-        img_plotter(hparams, UNet1,val_loader,train_loader,local_dir)
-        test_img_plotter(hparams, UNet1, local_dir)
-    elif(hparams.model_mode == 'Patch'):
-        img_patch_plotter(hparams, UNet1,val_loader,train_loader,local_dir)
+    img_plotter(hparams, UNet1,val_loader,train_loader,local_dir)
+    test_img_plotter(hparams, UNet1, local_dir)
+
 
 
 #function for plotting the test images
@@ -149,13 +160,14 @@ def test_img_plotter(hparams, UNet1, local_dir):
     for index, (input_img, target_img, params) in enumerate(test_loader):
         if(test_loader.batch_size==1):
             TE, TR, TI = int(params[0][0]),int(params[0][1]),int(params[0][2])
-            file_identifier = str(params[1])[31:50]
+            file_identifier = str(params[1])[20:50]
         else:
             TE, TR, TI = int(params[0][0][0]),int(params[0][1][0]),int(params[0][2][0])
-            file_identifier = str(params[1][0])[31:50]
+            file_identifier = str(params[1][0])[20:50]
 
+        multiplicative_term = UNet1(input_img.to(hparams.device)) 
+        model_out = multiplicative_term*input_img[:,0,None,:,:].to(hparams.device)
 
-        model_out = UNet1(input_img.to(hparams.device)) 
         NN_output = model_out[0,...].cpu().detach().numpy().squeeze()
         actual_out = target_img[0,...].cpu().detach().numpy().squeeze()
         actual_in = input_img[0,...].cpu().detach().numpy().squeeze()
@@ -164,24 +176,25 @@ def test_img_plotter(hparams, UNet1, local_dir):
         plt.suptitle('Parameters of contrast:- (TE = {}, TR = {}, TI = {}) {}'.format(TE, TR, TI, file_identifier), fontsize=16)
         plt.subplot(1,4,1)
         plt.imshow(np.abs(actual_in[0,:,:].squeeze()),cmap='gray',vmax=0.5,vmin=0)
+        # plt.imshow(np.abs(actual_in[:,:].squeeze()),cmap='gray',vmax=0.5,vmin=0)#for the case of single channel input
         plt.title('Input')
-        plt.colorbar()
+        # plt.colorbar()
         plt.axis('off')
         plt.subplot(1,4,2)
         plt.imshow(np.abs(NN_output),cmap='gray',vmax=0.5,vmin=0)
         plt.title('Gen Out')
         plt.axis('off')
-        plt.colorbar()
+        # plt.colorbar()
         plt.subplot(1,4,3)
         plt.imshow(np.abs(actual_out),cmap='gray',vmax=0.5,vmin=0)
         plt.title('Ground Truth')
         plt.axis('off')
-        plt.colorbar()
+        # plt.colorbar()
         plt.subplot(1,4,4)
         plt.imshow(np.abs(NN_output-actual_out),cmap='gray',vmax=0.5*0.5,vmin=0)
         plt.title('Difference 2X')
         plt.axis('off')
-        plt.colorbar()
+        # plt.colorbar()
             # Save
         plt.tight_layout()
         plt.savefig(local_dir + '/test_images'+ '/test_image_TE = {}, TR = {}, TI = {}_{}.png'.format(TE, TR, TI, file_identifier) , dpi=100)
@@ -192,12 +205,17 @@ def img_plotter(hparams, UNet1,val_loader,train_loader,local_dir):
     for index, (input_img, target_img, params) in enumerate(val_loader):
         if(val_loader.batch_size==1):
             TE, TR, TI = int(params[0][0]),int(params[0][1]),int(params[0][2])
-            file_identifier = str(params[1])[31:50]
+            file_identifier = str(params[1])[20:50]
         else:
             TE, TR, TI = int(params[0][0][0]),int(params[0][1][0]),int(params[0][2][0])
-            file_identifier = str(params[1][0])[31:50]
+            file_identifier = str(params[1][0])[20:50]
 
-        model_out = UNet1(input_img.to(hparams.device)) 
+        multiplicative_term = UNet1(input_img.to(hparams.device)) 
+        model_out = multiplicative_term*input_img[:,0,None,:,:].to(hparams.device)
+        model_out = multiplicative_term*input_img[:,0,None,:,:].to(hparams.device)
+
+
+        # model_out = UNet1(input_img.to(hparams.device)) 
         NN_output = model_out[0,...].cpu().detach().numpy().squeeze()
         actual_out = target_img[0,...].cpu().detach().numpy().squeeze()
         actual_in = input_img[0,...].cpu().detach().numpy().squeeze()
@@ -206,39 +224,50 @@ def img_plotter(hparams, UNet1,val_loader,train_loader,local_dir):
         plt.suptitle('Parameters of contrast:- (TE = {}, TR = {}, TI = {}) {}'.format(TE, TR, TI, file_identifier), fontsize=16)
         plt.subplot(1,4,1)
         plt.imshow(np.abs(actual_in[0,:,:].squeeze()),cmap='gray',vmax=0.5,vmin=0)
+        # plt.imshow(np.abs(actual_in[:,:].squeeze()),cmap='gray',vmax=0.5,vmin=0)
+
         plt.title('Input')
-        plt.colorbar()
+        # plt.colorbar()
         plt.axis('off')
         plt.subplot(1,4,2)
         plt.imshow(np.abs(NN_output),cmap='gray',vmax=0.5,vmin=0)
         plt.title('Gen Out')
         plt.axis('off')
-        plt.colorbar()
+        # plt.colorbar()
         plt.subplot(1,4,3)
         plt.imshow(np.abs(actual_out),cmap='gray',vmax=0.5,vmin=0)
         plt.title('Ground Truth')
         plt.axis('off')
-        plt.colorbar()
+        # plt.colorbar()
         plt.subplot(1,4,4)
         plt.imshow(np.abs(NN_output-actual_out),cmap='gray',vmax=0.5*0.5,vmin=0)
         plt.title('Difference 2X')
         plt.axis('off')
-        plt.colorbar()
+        # plt.colorbar()
             # Save
         plt.tight_layout()
         plt.savefig(local_dir + '/val_images'+ '/val_image_TE = {}, TR = {}, TI = {}_{}.png'.format(TE, TR, TI, file_identifier) , dpi=100)
         plt.close()
 
 
+    # # new train_loader with batch_size = 1
+    # train_data_dir = hparams.root_dir + hparams.data_file + '/training_samples.txt'
+    # train_dataset = Exp_contrast_Dataset(train_data_dir,transform=transforms.Compose([Normalize_by_max(),Toabsolute()]))
+    # train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=1, shuffle=False)
+
     for index, (input_img, target_img, params) in enumerate(train_loader):
         if(train_loader.batch_size==1):
             TE, TR, TI = int(params[0][0]),int(params[0][1]),int(params[0][2])
-            file_identifier = str(params[1])[31:50]
+            file_identifier = str(params[1])[20:50]
         else:
             TE, TR, TI = int(params[0][0][0]),int(params[0][1][0]),int(params[0][2][0])
-            file_identifier = str(params[1][0])[31:50]
+            file_identifier = str(params[1][0])[20:50]
 
-        model_out = UNet1(input_img.to(hparams.device)) 
+        # model_out = UNet1(input_img.to(hparams.device)) 
+
+        multiplicative_term = UNet1(input_img.to(hparams.device)) 
+        model_out = multiplicative_term*input_img[:,0,None,:,:].to(hparams.device)
+
         NN_output = model_out[0,...].cpu().detach().numpy().squeeze()
         actual_out = target_img[0,...].cpu().detach().numpy().squeeze()
         actual_in = input_img[0,...].cpu().detach().numpy().squeeze()
@@ -247,114 +276,26 @@ def img_plotter(hparams, UNet1,val_loader,train_loader,local_dir):
         plt.suptitle('Parameters of contrast:- (TE = {}, TR = {}, TI = {}) {}'.format(TE, TR, TI, file_identifier), fontsize=16)
         plt.subplot(1,4,1)
         plt.imshow(np.abs(actual_in[0,:,:].squeeze()),cmap='gray',vmax=0.5,vmin=0)
+        # plt.imshow(np.abs(actual_in[:,:].squeeze()),cmap='gray',vmax=0.5,vmin=0)#for the case of single channel input
         plt.title('Input')
-        plt.colorbar()
+        # plt.colorbar()
         plt.axis('off')
         plt.subplot(1,4,2)
         plt.imshow(np.abs(NN_output),cmap='gray',vmax=0.5,vmin=0)
         plt.title('Gen Out')
         plt.axis('off')
-        plt.colorbar()
+        # plt.colorbar()
         plt.subplot(1,4,3)
         plt.imshow(np.abs(actual_out),cmap='gray',vmax=0.5,vmin=0)
         plt.title('Ground Truth')
         plt.axis('off')
-        plt.colorbar()
+        # plt.colorbar()
         plt.subplot(1,4,4)
         plt.imshow(np.abs(NN_output-actual_out),cmap='gray',vmax=0.5*0.5,vmin=0)
         plt.title('Difference 2X')
         plt.axis('off')
-        plt.colorbar()
+        # plt.colorbar()
             # Save
         plt.tight_layout()
         plt.savefig(local_dir +'/train_images'+ '/train_image_TE = {}, TR = {}, TI = {}_{}.png'.format(TE, TR, TI, file_identifier), dpi=100)
         plt.close()
-
-
-# for plotting images when trained on the patches
-def img_patch_plotter(hparams, UNet1,val_loader,train_loader,local_dir):
-    unfold = torch.nn.Unfold(kernel_size=hparams.patch_size,stride=hparams.patch_stride)
-    fold = torch.nn.Fold(output_size=(288, 288),kernel_size=hparams.patch_size, stride=hparams.patch_stride)
-    for index, (input_img, target_img, params) in enumerate(val_loader):
-        # Get all the patches at once
-        unfolded = unfold(input_img[None,...])
-        patches = unfolded.reshape(1,hparams.patch_size,hparams.patch_size,-1)
-        patches_in = patches.permute(3,0,1,2)
-        patches_in = patches_in.to(hparams.device)
-        model_out = UNet1(patches_in) 
-        
-        out_patches = model_out.permute(1,2,3,0)
-        out_patches = out_patches.reshape(1,hparams.patch_size*hparams.patch_size,-1)
-        folded = fold(out_patches)
-        NN_output = folded.cpu().detach().numpy().squeeze()
-        actual_out = target_img.cpu().detach().numpy().squeeze()
-        actual_in = input_img.cpu().detach().numpy().squeeze()
-
-        plt.figure(figsize=(16,6))
-        plt.suptitle('Parameters of contrast:- (TE = {}, TR = {}, TI = {})'.format(*params[0]), fontsize=16)
-        plt.subplot(1,4,1)
-        plt.imshow(np.abs(actual_in),cmap='gray',vmax=0.5,vmin=0)
-        plt.title('Input')
-        plt.colorbar()
-        plt.axis('off')
-        plt.subplot(1,4,2)
-        plt.imshow(np.abs(NN_output),cmap='gray',vmax=0.5,vmin=0)
-        plt.title('Gen Out')
-        plt.axis('off')
-        plt.colorbar()
-        plt.subplot(1,4,3)
-        plt.imshow(np.abs(actual_out),cmap='gray',vmax=0.5,vmin=0)
-        plt.title('Ground Truth')
-        plt.axis('off')
-        plt.colorbar()
-        plt.subplot(1,4,4)
-        plt.imshow(np.abs(NN_output-actual_out),cmap='gray',vmax=0.5*0.5,vmin=0)
-        plt.title('Difference 2X')
-        plt.axis('off')
-        plt.colorbar()
-            # Save
-        plt.tight_layout()
-        plt.savefig(local_dir + '/val_image_TE = {}, TR = {}, TI = {}_{}.png'.format(*params[0],params[1]), dpi=100)
-        plt.close()
-
-    for index, (input_img, target_img, params) in enumerate(train_loader):
-        # Get all the patches at once
-        unfolded = unfold(input_img[None,...])
-        patches = unfolded.reshape(1,hparams.patch_size,hparams.patch_size,-1)
-        patches_in = patches.permute(3,0,1,2)
-        patches_in = patches_in.to(hparams.device)
-        model_out = UNet1(patches_in) 
-        
-        out_patches = model_out.permute(1,2,3,0)
-        out_patches = out_patches.reshape(1,hparams.patch_size*hparams.patch_size,-1)
-        folded = fold(out_patches)
-        NN_output = folded.cpu().detach().numpy().squeeze()
-        actual_out = target_img.cpu().detach().numpy().squeeze()
-        actual_in = input_img.cpu().detach().numpy().squeeze()
-        plt.figure(figsize=(16,6))
-        plt.suptitle('Parameters of contrast:- (TE = {}, TR = {}, TI = {})'.format(*params[0]), fontsize=16)
-        plt.subplot(1,4,1)
-        plt.imshow(np.abs(actual_in),cmap='gray',vmax=0.5,vmin=0)
-        plt.title('Input')
-        plt.colorbar()
-        plt.axis('off')
-        plt.subplot(1,4,2)
-        plt.imshow(np.abs(NN_output),cmap='gray',vmax=0.5,vmin=0)
-        plt.title('Gen Out')
-        plt.axis('off')
-        plt.colorbar()
-        plt.subplot(1,4,3)
-        plt.imshow(np.abs(actual_out),cmap='gray',vmax=0.5,vmin=0)
-        plt.title('Ground Truth')
-        plt.axis('off')
-        plt.colorbar()
-        plt.subplot(1,4,4)
-        plt.imshow(np.abs(NN_output-actual_out),cmap='gray',vmax=0.5*0.5,vmin=0)
-        plt.title('Difference 2X')
-        plt.axis('off')
-        plt.colorbar()
-            # Save
-        plt.tight_layout()
-        plt.savefig(local_dir + '/train_image_TE = {}, TR = {}, TI = {}_{}.png'.format(*params[0],params[1]), dpi=100)
-        plt.close()
-
